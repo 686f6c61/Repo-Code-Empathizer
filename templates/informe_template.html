@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .positive { color: #198754; font-weight: bold; }
+        .negative { color: #dc3545; font-weight: bold; }
+        .metric-card { height: 100%; }
+        .repo-comparison { background-color: #f8f9fa; padding: 20px; border-radius: 10px; }
+        .difference-arrow { font-size: 2em; color: #6c757d; }
+        .metric-value { font-size: 1.2em; font-weight: bold; }
+        .chart-container { height: 300px; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1 class="display-4">{{ titulo }}</h1>
+                <p class="lead">Análisis comparativo de empatía en el código</p>
+            </div>
+        </div>
+
+        <!-- Resumen de Repositorios -->
+        <div class="row mb-5">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title mb-0">
+                            {% if repo_tipo == 'master' %}
+                            <i class="fas fa-star me-2"></i>
+                            {% else %}
+                            <i class="fas fa-code-compare me-2"></i>
+                            {% endif %}
+                            Repositorio {{ repo_tipo|title }}
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        {% if repo_data and repo_data.metadata %}
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <i class="fas fa-box me-2"></i>
+                                <strong>Nombre:</strong> {{ repo_data.metadata.nombre|default('N/A') }}
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-link me-2"></i>
+                                <strong>URL:</strong> 
+                                <a href="{{ repo_data.metadata.url|default('#') }}" target="_blank">
+                                    {{ repo_data.metadata.url|default('N/A') }}
+                                </a>
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-file-alt me-2"></i>
+                                <strong>Descripción:</strong> {{ repo_data.metadata.descripcion|default('No disponible') }}
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-calendar me-2"></i>
+                                <strong>Creado:</strong> {{ repo_data.metadata.fecha_creacion|default('N/A')|date }}
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-code me-2"></i>
+                                <strong>Lenguaje:</strong> {{ repo_data.metadata.lenguaje_principal|default('N/A') }}
+                            </li>
+                            <li class="list-group-item">
+                                <i class="fas fa-weight me-2"></i>
+                                <strong>Tamaño:</strong> {{ repo_data.metadata.tamano_kb|default(0)|round(2) }} KB
+                            </li>
+                        </ul>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No hay datos disponibles para este repositorio
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Tabla de Información de Métricas -->
+        <div class="card mb-5">
+            <div class="card-header bg-info text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Métricas Analizadas
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Grupo</th>
+                                <th>KPI</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="fw-bold">Nombres</td>
+                                <td>Descriptividad</td>
+                                <td>Mide qué tan descriptivos son los nombres de las funciones, variables y clases en el código.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold">Documentación</td>
+                                <td>Cobertura de docstrings</td>
+                                <td>Calcula el porcentaje de funciones y clases que tienen docstrings para documentación.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold" rowspan="4">Modularidad</td>
+                                <td>Funciones por archivo</td>
+                                <td>Cuenta el número de funciones en el archivo.</td>
+                            </tr>
+                            <tr>
+                                <td>Clases por archivo</td>
+                                <td>Cuenta el número de clases en el archivo.</td>
+                            </tr>
+                            <tr>
+                                <td>Cohesión promedio</td>
+                                <td>Evalúa el grado de cohesión en las clases mediante el uso compartido de atributos entre métodos.</td>
+                            </tr>
+                            <tr>
+                                <td>Acoplamiento promedio</td>
+                                <td>Mide el acoplamiento calculando el número de dependencias externas (importaciones) en las funciones y clases.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold" rowspan="3">Complejidad</td>
+                                <td>Complejidad ciclomática</td>
+                                <td>Calcula la complejidad ciclomática del archivo, que mide el número de caminos lógicos en el código.</td>
+                            </tr>
+                            <tr>
+                                <td>Nivel máximo de anidación</td>
+                                <td>Mide la profundidad máxima de estructuras de control anidadas (e.g., if, for, while).</td>
+                            </tr>
+                            <tr>
+                                <td>Longitud promedio de funciones</td>
+                                <td>Calcula la longitud promedio de las funciones en términos de número de líneas.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold" rowspan="3">Manejo de Errores</td>
+                                <td>Cobertura de manejo de errores</td>
+                                <td>Porcentaje de funciones que contienen bloques <code>try-except</code> para manejo de errores.</td>
+                            </tr>
+                            <tr>
+                                <td>Especificidad de excepciones</td>
+                                <td>Proporción de bloques <code>try-except</code> que manejan excepciones específicas en lugar de genéricas.</td>
+                            </tr>
+                            <tr>
+                                <td>Densidad de bloques try-except</td>
+                                <td>Número de bloques <code>try-except</code> por función en el archivo.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold" rowspan="3">Pruebas</td>
+                                <td>Cobertura de pruebas</td>
+                                <td>Proporción de funciones de prueba (<code>test_</code>) en el archivo en relación con el total de funciones.</td>
+                            </tr>
+                            <tr>
+                                <td>Densidad de asserts</td>
+                                <td>Número promedio de <code>asserts</code> por función de prueba.</td>
+                            </tr>
+                            <tr>
+                                <td>Funciones de prueba</td>
+                                <td>Cuenta el número de funciones de prueba en el archivo.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold" rowspan="3">Seguridad</td>
+                                <td>Validación de entradas</td>
+                                <td>Proporción de funciones que contienen validación de entrada (e.g., <code>isinstance</code>, <code>type</code>).</td>
+                            </tr>
+                            <tr>
+                                <td>Uso de funciones peligrosas</td>
+                                <td>Penalización basada en el uso de funciones potencialmente peligrosas como <code>eval</code> y <code>exec</code>.</td>
+                            </tr>
+                            <tr>
+                                <td>Total de validaciones</td>
+                                <td>Cuenta el número total de validaciones de entrada en el código.</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-bold" rowspan="3">Consistencia de Estilo</td>
+                                <td>Consistencia de nombres</td>
+                                <td>Proporción de nombres de variables y funciones que siguen una convención (e.g., snake_case, camelCase).</td>
+                            </tr>
+                            <tr>
+                                <td>Espaciado consistente</td>
+                                <td>Indica si el espaciado en el código es consistente (controlado por <code>pylint</code>).</td>
+                            </tr>
+                            <tr>
+                                <td>Longitud de líneas consistente</td>
+                                <td>Indica si la longitud de las líneas es consistente y cumple con las recomendaciones de estilo.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparación de Métricas -->
+        {% for categoria in categorias %}
+        <div class="card mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h3 class="mb-0">{{ categoria|title }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for repo_tipo, repo_data in metricas.repos.items() %}
+                    <div class="col-md-5 {% if repo_tipo == 'master' %}text-end{% endif %}">
+                        {% if repo_data and categoria in repo_data %}
+                        <div class="metric-values">
+                            {% for metrica, valor in repo_data[categoria].items() %}
+                            <div class="mb-3">
+                                <h5>{{ metrica|replace('_', ' ')|title }}</h5>
+                                <span class="metric-value">{{ valor|round(3) }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if loop.first %}
+                    <div class="col-md-2 text-center">
+                        <div class="difference-arrow">
+                            <i class="fas fa-arrows-left-right"></i>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Diferencias -->
+                {% if metricas.diferencias and categoria in metricas.diferencias %}
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-header">
+                                <h4 class="mb-0">Diferencias</h4>
+                            </div>
+                            <div class="card-body">
+                                {% for metrica, diferencia in metricas.diferencias[categoria].items() %}
+                                <div class="mb-2">
+                                    <strong>{{ metrica|replace('_', ' ')|title }}:</strong>
+                                    <span class="{{ 'positive' if diferencia > 0 else 'negative' if diferencia < 0 else '' }}">
+                                        {{ diferencia|round(3) }}
+                                        {% if diferencia > 0 %}
+                                        <i class="fas fa-arrow-up"></i>
+                                        {% elif diferencia < 0 %}
+                                        <i class="fas fa-arrow-down"></i>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Conclusión -->
+        <div class="card mb-5">
+            <div class="card-header bg-dark text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    Conclusión
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card bg-light h-100">
+                            <div class="card-body text-center">
+                                <h4 class="card-title">Repositorio Master</h4>
+                                <p class="display-4 mb-0">
+                                    {{ (metricas.puntuacion_master|default(0))|round(2) }}
+                                </p>
+                                <p class="text-muted">Puntuación total</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card bg-light h-100">
+                            <div class="card-body text-center">
+                                <h4 class="card-title">Repositorio Comparado</h4>
+                                <p class="display-4 mb-0">
+                                    {{ (metricas.puntuacion_comparado|default(0))|round(2) }}
+                                </p>
+                                <p class="text-muted">Puntuación total</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <h4 class="card-title">Diferencia</h4>
+                                {% set diferencia = (metricas.puntuacion_master|default(0)) - (metricas.puntuacion_comparado|default(0)) %}
+                                <p class="display-4 mb-0 {{ 'positive' if diferencia > 0 else 'negative' if diferencia < 0 else '' }}">
+                                    {{ '+' if diferencia > 0 }}{{ diferencia|round(2) }}
+                                    {% if diferencia != 0 %}
+                                        <i class="fas fa-arrow-{{ 'up' if diferencia > 0 else 'down' }} ms-2"></i>
+                                    {% endif %}
+                                </p>
+                                <p class="text-muted">Diferencia total</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones -->
+                {% if metricas.recomendaciones %}
+                <div class="mt-4">
+                    <h4><i class="fas fa-lightbulb me-2"></i>Recomendaciones</h4>
+                    <ul class="list-group">
+                        {% for recomendacion in metricas.recomendaciones %}
+                        <li class="list-group-item">
+                            <i class="fas fa-check-circle me-2 text-success"></i>
+                            {{ recomendacion }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Análisis Detallado -->
+                <div class="card-body border-top mt-4">
+                    <h4 class="mb-4">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Análisis Detallado
+                    </h4>
+                    
+                    <div class="row">
+                        <!-- Mejor Repositorio -->
+                        <div class="col-12 mb-4">
+                            <div class="alert alert-success">
+                                <h5 class="alert-heading">
+                                    <i class="fas fa-trophy me-2"></i>
+                                    Repositorio con Mejor Desempeño
+                                </h5>
+                                <p class="mb-0">
+                                    {% if metricas.puntuacion_master > metricas.puntuacion_comparado %}
+                                        El repositorio <strong>{{ metricas.repos.master.metadata.nombre }}</strong> tiene mejor desempeño general
+                                        con una puntuación de {{ metricas.puntuacion_master|round(2) }}.
+                                    {% else %}
+                                        El repositorio <strong>{{ metricas.repos.comparado.metadata.nombre }}</strong> tiene mejor desempeño general
+                                        con una puntuación de {{ metricas.puntuacion_comparado|round(2) }}.
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Mejores y Peores Métricas por Repo -->
+                        {% for repo_tipo, repo_data in metricas.repos.items() %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header {% if repo_tipo == 'master' %}bg-primary{% else %}bg-secondary{% endif %} text-white">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas {% if repo_tipo == 'master' %}fa-star{% else %}fa-code-compare{% endif %} me-2"></i>
+                                        {{ repo_data.metadata.nombre }}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Mejores Métricas -->
+                                    <h6 class="text-success">
+                                        <i class="fas fa-arrow-up me-2"></i>
+                                        Mejores Métricas
+                                    </h6>
+                                    <ul class="list-group list-group-flush mb-4">
+                                        {% for categoria in repo_data.keys() if categoria != 'metadata' %}
+                                            {% for metrica, valor in repo_data[categoria].items() %}
+                                                {% if valor >= 0.7 %}
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    {{ metrica|replace('_', ' ')|title }}
+                                                    <span class="badge bg-success rounded-pill">{{ valor|round(3) }}</span>
+                                                </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </ul>
+
+                                    <!-- Peores Métricas -->
+                                    <h6 class="text-danger">
+                                        <i class="fas fa-arrow-down me-2"></i>
+                                        Métricas por Mejorar
+                                    </h6>
+                                    <ul class="list-group list-group-flush">
+                                        {% for categoria in repo_data.keys() if categoria != 'metadata' %}
+                                            {% for metrica, valor in repo_data[categoria].items() %}
+                                                {% if valor < 0.4 %}
+                                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                    {{ metrica|replace('_', ' ')|title }}
+                                                    <span class="badge bg-danger rounded-pill">{{ valor|round(3) }}</span>
+                                                </li>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Explicación de Cálculos -->
+        <div class="card mb-5">
+            <div class="card-header bg-info text-white">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-calculator me-2"></i>
+                    Metodología de Cálculo
+                </h3>
+            </div>
+            <div class="card-body">
+                <div class="accordion" id="calculosAccordion">
+                    <!-- Nombres -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNombres">
+                                <i class="fas fa-tag me-2"></i> Cálculo de Nombres
+                            </button>
+                        </h2>
+                        <div id="collapseNombres" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Descriptividad (0-1):</strong></p>
+                                <ul>
+                                    <li>Se analiza cada identificador (variables, funciones, clases)</li>
+                                    <li>Puntuación más alta para nombres descriptivos (más de 3 caracteres, sin abreviaturas)</li>
+                                    <li>Penalización por nombres genéricos como 'x', 'temp', 'var'</li>
+                                    <li>Se promedian todas las puntuaciones</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documentación -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDocumentacion">
+                                <i class="fas fa-file-alt me-2"></i> Cálculo de Documentación
+                            </button>
+                        </h2>
+                        <div id="collapseDocumentacion" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Cobertura de docstrings (0-1):</strong></p>
+                                <ul>
+                                    <li>Número de funciones/clases con docstring / Total de funciones y clases</li>
+                                    <li>Bonus por docstrings que incluyen parámetros y retorno</li>
+                                    <li>Bonus adicional por ejemplos en la documentación</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modularidad -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseModularidad">
+                                <i class="fas fa-cubes me-2"></i> Cálculo de Modularidad
+                            </button>
+                        </h2>
+                        <div id="collapseModularidad" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Funciones por archivo:</strong> Número total de funciones / Número de archivos</p>
+                                <p><strong>Clases por archivo:</strong> Número total de clases / Número de archivos</p>
+                                <p><strong>Cohesión promedio (0-1):</strong></p>
+                                <ul>
+                                    <li>Mide cuánto comparten los métodos los atributos de clase</li>
+                                    <li>Mayor puntuación cuando los métodos usan más atributos en común</li>
+                                </ul>
+                                <p><strong>Acoplamiento promedio (0-1):</strong></p>
+                                <ul>
+                                    <li>Menor puntuación a más dependencias externas</li>
+                                    <li>Se considera el número de imports y uso de variables globales</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Complejidad -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseComplejidad">
+                                <i class="fas fa-code-branch me-2"></i> Cálculo de Complejidad
+                            </button>
+                        </h2>
+                        <div id="collapseComplejidad" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Complejidad ciclomática:</strong></p>
+                                <ul>
+                                    <li>Número de caminos independientes en el código</li>
+                                    <li>Se suma 1 por cada: if, while, for, and, or</li>
+                                    <li>Penalización por valores > 10</li>
+                                </ul>
+                                <p><strong>Nivel máximo de anidación:</strong></p>
+                                <ul>
+                                    <li>Profundidad máxima de estructuras anidadas</li>
+                                    <li>Penalización por niveles > 3</li>
+                                </ul>
+                                <p><strong>Longitud promedio funciones:</strong></p>
+                                <ul>
+                                    <li>Número de líneas por función</li>
+                                    <li>Penalización por funciones > 20 líneas</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Manejo de Errores -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseErrores">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Cálculo de Manejo de Errores
+                            </button>
+                        </h2>
+                        <div id="collapseErrores" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Cobertura (0-1):</strong> Funciones con try-except / Total funciones</p>
+                                <p><strong>Especificidad (0-1):</strong></p>
+                                <ul>
+                                    <li>Mayor puntuación por excepciones específicas</li>
+                                    <li>Penalización por except: sin tipo</li>
+                                </ul>
+                                <p><strong>Densidad:</strong> Número de try-except / Número de funciones</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pruebas -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePruebas">
+                                <i class="fas fa-vial me-2"></i> Cálculo de Pruebas
+                            </button>
+                        </h2>
+                        <div id="collapsePruebas" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Cobertura (0-1):</strong> Funciones test / Total funciones</p>
+                                <p><strong>Densidad asserts:</strong> Número de asserts / Número de funciones test</p>
+                                <p><strong>Funciones test:</strong> Conteo directo de funciones que empiezan por "test_"</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seguridad -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeguridad">
+                                <i class="fas fa-shield-alt me-2"></i> Cálculo de Seguridad
+                            </button>
+                        </h2>
+                        <div id="collapseSeguridad" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Validación entradas (0-1):</strong> Funciones con validación / Total funciones</p>
+                                <p><strong>Funciones peligrosas (0-1):</strong></p>
+                                <ul>
+                                    <li>Penalización por uso de eval, exec, globals()</li>
+                                    <li>1 = ninguna función peligrosa usada</li>
+                                </ul>
+                                <p><strong>Total validaciones:</strong> Suma de todas las validaciones encontradas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consistencia -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConsistencia">
+                                <i class="fas fa-ruler me-2"></i> Cálculo de Consistencia
+                            </button>
+                        </h2>
+                        <div id="collapseConsistencia" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
+                            <div class="accordion-body">
+                                <p><strong>Nombres (0-1):</strong> Identificadores que siguen convención / Total identificadores</p>
+                                <p><strong>Espaciado (0-1):</strong> Líneas con espaciado correcto / Total líneas</p>
+                                <p><strong>Longitud líneas (0-1):</strong> Líneas < 80 caracteres / Total líneas</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center text-muted mt-5 py-4 bg-light">
+            <div class="container">
+                <p class="mb-1">
+                    Comparador de empatía de código - Recruitment 2024
+                </p>
+                <p class="mb-0">
+                    Con 🤍 de <a href="https://github.com/686f6c61" class="text-decoration-none" target="_blank">@686f6c61</a>
+                </p>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
