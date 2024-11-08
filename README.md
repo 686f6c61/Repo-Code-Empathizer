@@ -5,20 +5,20 @@
 
 Repo Code Empathizer es una herramienta de análisis estático que evalúa la "empatía" del código en repositorios. Analiza y compara diferentes métricas de calidad para ayudar a los desarrolladores a crear código más mantenible y comprensible.
 
-## ✨ Características Principales
+## ✨ Características principales
 
-### 🔄 Análisis Comparativo
+### 🔄 Análisis comparativo
 - Compara dos repositorios de GitHub simultáneamente
 - Genera puntuaciones detalladas por categoría
 - Identifica áreas de mejora específicas
 
-### 📊 Formatos de Exportación
+### 📊 Formatos de exportación
 - **TXT**: Reportes simples y concisos
 - **JSON**: Datos estructurados para análisis posterior
 - **HTML**: Visualización interactiva detallada
 - **Multi-formato**: Exportación simultánea en todos los formatos
 
-### 🎯 Categorías de Análisis
+### 🎯 Categorías de análisis
 1. 📝 **Nombres Descriptivos**
    - Evaluación de claridad
    - Consistencia en nomenclatura
@@ -49,8 +49,13 @@ Repo Code Empathizer es una herramienta de análisis estático que evalúa la "e
 8. 🔒 **Seguridad**
    - Validación de entradas
    - Prácticas seguras
+  
+## 📊 Ejemplos de Análisis
 
-# 📊 Métricas y Cálculo de Empatía
+### Reporte HTML
+![Ejemplo de análisis](img/poc_empatia.png)
+
+# 📊 Métricas y cálculo de empatía
 
 ### Grupos de KPIs
 
@@ -109,7 +114,7 @@ Repo Code Empathizer es una herramienta de análisis estático que evalúa la "e
 | Espaciado | Indentación y formato | Análisis con pylint |
 | Longitud líneas | Límite de caracteres | % líneas < 80 caracteres |
 
-### 🎯 Cálculo de Empatía
+### 🎯 Cálculo de empatía
 
 La puntuación final de empatía se calcula como un promedio ponderado de todas las categorías:
 
@@ -132,9 +137,9 @@ Cada categoría se evalúa en una escala de 0 a 1, donde:
 - 0.6-0.8: Buenas prácticas
 - 0.8-1.0: Excelente empatía
 
-## 📊 Resultados de Análisis
+## 📊 Resultados de análisis
 
-### Ejemplo de Métricas Reales
+### Ejemplo de métricas reales
 
 ```json
 {
@@ -178,15 +183,15 @@ Cada categoría se evalúa en una escala de 0 a 1, donde:
 }
 ```
 
-### 📈 Interpretación de Resultados
+### 📈 Interpretación de resultados
 
-#### Escala de Evaluación
+#### Escala de evaluación
 - 🔴 0.0-0.3: Necesita mejora urgente
 - 🟡 0.3-0.6: Cumple estándares mínimos
 - 🟢 0.6-0.8: Buenas prácticas
 - 🌟 0.8-1.0: Excelente implementación
 
-#### Puntos Destacados
+#### Puntos destacados
 - **Nombres**: Excelente descriptividad (0.81)
 - **Documentación**: Necesita mejora significativa (0.25)
 - **Modularidad**: Buen balance de funciones por archivo (2.6)
@@ -194,13 +199,13 @@ Cada categoría se evalúa en una escala de 0 a 1, donde:
 - **Seguridad**: Excelente evitación de funciones peligrosas (1.2)
 - **Consistencia**: Buena adherencia a estándares de código (0.77)
 
-#### Áreas de Mejora
+#### Áreas de mejora
 1. 📚 Aumentar cobertura de documentación
 2. ⚠️ Implementar manejo de errores
 3. 🧪 Añadir pruebas unitarias
 4. 🔒 Mejorar validación de entradas
 
-### 🎯 Puntuación Final de Empatía
+### 🎯 Puntuación final de empatía
 
 La puntuación se calcula ponderando cada categoría:
 
@@ -211,10 +216,10 @@ empatia_final = (
     modularidad * 0.15 +          # 0.40 * 0.15 = 0.060
     complejidad * 0.15 +          # 0.58 * 0.15 = 0.087
     manejo_errores * 0.10 +       # 0.00 * 0.10 = 0.000
-    pruebas * 0.10 +             # 0.00 * 0.10 = 0.000
-    seguridad * 0.10 +           # 1.20 * 0.10 = 0.120
-    consistencia * 0.10          # 0.77 * 0.10 = 0.077
-)                               # Total = 0.504 (Cumple estándares básicos)
+    pruebas * 0.10 +              # 0.00 * 0.10 = 0.000
+    seguridad * 0.10 +            # 1.20 * 0.10 = 0.120
+    consistencia * 0.10           # 0.77 * 0.10 = 0.077
+)                                 # Total = 0.504 (Cumple estándares básicos)
 ``` 
 
 ## 🚀 Inicio Rápido
@@ -250,10 +255,7 @@ cp .env.example .env
 python3 src/main.py
 ```
 
-## 📊 Ejemplos de Análisis
 
-### Reporte HTML
-![Ejemplo de Reporte](docs/images/report-example.png)
 
 #
 ## 📁 Estructura del Proyecto
@@ -261,15 +263,14 @@ python3 src/main.py
 ```
 code-empathizer/
 ├── src/
-│   ├── main.py           # Punto de entrada
-│   ├── github_utils.py   # Utilidades GitHub
-│   ├── analyzers.py      # Analizadores
-│   └── exporters.py      # Exportadores
-├── tests/                # Tests unitarios
-├── docs/                 # Documentación
-├── export/              # Reportes generados
-├── requirements.txt     # Dependencias
-└── .env                # Configuración
+│   ├── exporter/           # Carpeta de informes en TXT,JSON y HTML  
+│   ├── main.py             # Punto de entrada
+│   ├── github_utils.py     # Utilidades GitHub
+│   ├── analyzers.py        # Analizadores
+│   └── exporters.py        # Exportadores
+├── REPO.txt/               # Repositorios para seleccionar
+├── requirements.txt        # Dependencias
+└── .env                    # Configuración
 ```
 
 
