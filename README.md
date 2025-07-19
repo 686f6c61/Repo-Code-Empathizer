@@ -1,284 +1,478 @@
-# Repo Code Empathizer 🔍
+# 🔍 Repo Code Empathizer v2.0
 
+> **Herramienta profesional para medir la alineación entre el código de tu empresa y los candidatos**
 
-## 📋 Descripción
+<div align="center">
 
-Repo Code Empathizer es una herramienta de análisis estático que evalúa la "empatía" del código en repositorios. Analiza y compara diferentes métricas de calidad para ayudar a los desarrolladores a crear código más mantenible y comprensible.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
+[![GitHub API](https://img.shields.io/badge/GitHub-API%20v3-black.svg)](https://docs.github.com/en/rest)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Multi-Language](https://img.shields.io/badge/Languages-12-orange.svg)](#lenguajes-soportados)
 
-## ✨ Características principales
+</div>
 
-### 🔄 Análisis comparativo
-- Compara dos repositorios de GitHub simultáneamente
-- Genera puntuaciones detalladas por categoría
-- Identifica áreas de mejora específicas
+## 📋 ¿Qué es Repo Code Empathizer?
 
-### 📊 Formatos de exportación
-- **TXT**: Reportes simples y concisos
-- **JSON**: Datos estructurados para análisis posterior
-- **HTML**: Visualización interactiva detallada
-- **Multi-formato**: Exportación simultánea en todos los formatos
+Repo Code Empathizer es una herramienta avanzada diseñada para ayudar a las empresas a evaluar qué tan bien se alinea el estilo de código de un candidato con los estándares y prácticas de la empresa. 
 
-### 🎯 Categorías de análisis
-1. 📝 **Nombres Descriptivos**
-   - Evaluación de claridad
-   - Consistencia en nomenclatura
-   
-2. 🔄 **Complejidad**
-   - Análisis ciclomático
-   - Niveles de anidación
-   
-3. 📦 **Modularidad**
-   - Cohesión y acoplamiento
-   - Organización del código
-   
-4. 📚 **Documentación**
-   - Cobertura de docstrings
-   - Calidad de comentarios
+### 🎯 Propósito Principal
 
-5. ⚠️ **Manejo de Errores**
-   - Tratamiento de excepciones
-   - Robustez del código
+**Medir la "empatía" del código**: Determinar si un candidato escribe código de manera similar a como lo hace tu equipo, facilitando:
+- 🤝 **Integración más rápida** al equipo
+- 📊 **Evaluación objetiva** basada en métricas
+- 🎨 **Consistencia** en el estilo de código
+- 📈 **Reducción** del tiempo de adaptación
 
-6. 🧪 **Pruebas**
-   - Cobertura de tests
-   - Calidad de assertions
+## 🌟 Características Principales
 
-7. 🎨 **Estilo**
-   - Consistencia de formato
+### 🔄 Análisis Empresa vs Candidato
+- Compara el repositorio maestro de tu empresa con el código del candidato
+- Genera una puntuación de empatía del 0-100%
+- Identifica gaps específicos en estilo y prácticas
+- Proporciona recomendaciones detalladas para el candidato
 
-8. 🔒 **Seguridad**
-   - Validación de entradas
-   - Prácticas seguras
-  
-## 📊 Ejemplos de Análisis
+### 🌐 Soporte Multi-Lenguaje
 
-### Reporte HTML
-![Ejemplo de análisis](img/poc_empatia.png)
+Analizamos los **12 lenguajes más populares** según GitHub Octoverse 2024:
 
-# 📊 Métricas y cálculo de empatía
+| Lenguaje | Ranking GitHub | % Uso Global | Estado |
+|----------|----------------|--------------|---------|
+| Python | #1 | ~28% | ✅ Implementado |
+| JavaScript | #2 | ~25% | ✅ Implementado |
+| TypeScript | #3 | ~15% | ✅ Implementado |
+| Java | #4 | ~12% | ✅ Implementado |
+| C++ | #5 | ~8% | ✅ Implementado |
+| C# | #6 | ~6% | ✅ Implementado |
+| PHP | #7 | ~5% | ✅ Implementado |
+| Go | #8 | ~4% | ✅ Implementado |
+| Ruby | #9 | ~3% | ✅ Implementado |
+| Swift | #10 | ~2% | ✅ Implementado |
+| HTML | - | - | ✅ Implementado |
+| CSS | - | - | ✅ Implementado |
 
-### Grupos de KPIs
+> **Nota**: Los porcentajes son aproximados basados en el GitHub Octoverse 2024. Python superó a JavaScript como #1 en 2024.
 
-#### 1. 📝 Nombres
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Descriptividad | Claridad de identificadores | Análisis de nombres (vars, funcs, clases) |
-| Consistencia | Adherencia a convenciones | % nombres que siguen estándares |
+### 📊 Métricas Analizadas
 
-#### 2. 📚 Documentación
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Cobertura docstrings | % código documentado | `funciones_con_docstring / total_funciones` |
-| Calidad docs | Completitud de documentación | Bonus por params, returns y ejemplos |
+<details>
+<summary><b>Ver todas las métricas (8 categorías)</b></summary>
 
-#### 3. 🧩 Modularidad
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Funciones/archivo | Densidad de funciones | `total_funciones / total_archivos` |
-| Clases/archivo | Densidad de clases | `total_clases / total_archivos` |
-| Cohesión | Uso compartido de atributos | % métodos que comparten atributos |
-| Acoplamiento | Dependencias externas | Penalización por imports y vars globales |
+#### 1. 📝 **Nombres Descriptivos** (15%)
+- Claridad de variables, funciones y clases
+- Adherencia a convenciones del lenguaje (camelCase, snake_case, etc.)
+- Uso de nombres significativos vs genéricos
 
-#### 4. 🔄 Complejidad
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Ciclomática | Caminos de ejecución | +1 por cada: if, while, for, and, or |
-| Anidación | Profundidad de estructuras | Penalización por niveles > 3 |
-| Longitud funciones | Tamaño de funciones | Penalización por > 20 líneas |
+#### 2. 📚 **Documentación** (15%)
+- Cobertura de documentación (docstrings, JSDoc, etc.)
+- Calidad y completitud de comentarios
+- Documentación de parámetros y valores de retorno
 
-#### 5. ⚠️ Manejo de Errores
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Cobertura | Uso de try-except | `funcs_con_try_except / total_funcs` |
-| Especificidad | Excepciones específicas | Penalización por except genéricos |
-| Densidad | Bloques try-except | `total_try_except / total_funcs` |
+#### 3. 🧩 **Modularidad** (15%)
+- Organización del código en módulos/componentes
+- Separación de responsabilidades
+- Reutilización de código
 
-#### 6. 🧪 Pruebas
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Cobertura | Funciones con tests | `funcs_test / total_funcs` |
-| Densidad asserts | Aserciones por test | `total_asserts / total_funcs_test` |
-| Funciones test | Total de pruebas | Conteo de funciones `test_*` |
+#### 4. 🔄 **Complejidad** (15%)
+- Complejidad ciclomática
+- Niveles de anidación
+- Longitud de funciones y métodos
 
-#### 7. 🔒 Seguridad
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Validación entradas | Verificación de datos | `funcs_con_validacion / total_funcs` |
-| Funciones peligrosas | Uso de eval, exec, etc. | Penalización por uso |
-| Total validaciones | Cantidad de checks | Suma de todas las validaciones |
+#### 5. ⚠️ **Manejo de Errores** (10%)
+- Cobertura de excepciones
+- Especificidad de errores
+- Patrones de programación defensiva
 
-#### 8. 📏 Consistencia
-| KPI | Descripción | Cálculo |
-|-----|-------------|----------|
-| Nombres | Convenciones de naming | `nombres_consistentes / total_nombres` |
-| Espaciado | Indentación y formato | Análisis con pylint |
-| Longitud líneas | Límite de caracteres | % líneas < 80 caracteres |
+#### 6. 🧪 **Pruebas** (10%)
+- Detección de archivos de prueba
+- Densidad de aserciones
+- Cobertura estimada
 
-### 🎯 Cálculo de empatía
+#### 7. 🔒 **Seguridad** (10%)
+- Validación de entradas
+- Evitación de funciones peligrosas
+- Prácticas seguras específicas del lenguaje
 
-La puntuación final de empatía se calcula como un promedio ponderado de todas las categorías:
+#### 8. 📏 **Consistencia de Estilo** (10%)
+- Formato consistente
+- Espaciado y indentación
+- Adherencia a guías de estilo
+
+</details>
+
+### 🧮 Algoritmo de Empatía
+
+Nuestro algoritmo avanzado calcula la empatía entre el código de la empresa y el candidato:
+
+#### 📊 Fórmula de Puntuación
 
 ```python
-empatia = (
-    nombres * 0.15 +
-    documentacion * 0.15 +
-    modularidad * 0.15 +
-    complejidad * 0.15 +
-    manejo_errores * 0.10 +
-    pruebas * 0.10 +
-    seguridad * 0.10 +
-    consistencia * 0.10
+empathy_score = (
+    sum(category_scores[cat] * weights[cat] for cat in categories) * 
+    language_overlap_factor * 
+    adjustment_factors
 )
 ```
 
-Cada categoría se evalúa en una escala de 0 a 1, donde:
-- 0.0-0.3: Necesita mejora significativa
-- 0.3-0.6: Cumple estándares básicos
-- 0.6-0.8: Buenas prácticas
-- 0.8-1.0: Excelente empatía
+#### 🎯 Componentes del Cálculo
 
-## 📊 Resultados de análisis
+1. **Puntuaciones por Categoría (70% del peso)**
+   - Cada categoría se evalúa de 0-100%
+   - Se aplican pesos diferenciados:
+     ```
+     Nombres: 15%
+     Documentación: 15% 
+     Modularidad: 15%
+     Complejidad: 15%
+     Manejo de Errores: 10%
+     Pruebas: 10%
+     Seguridad: 10%
+     Consistencia: 10%
+     ```
 
-### Ejemplo de métricas reales
+2. **Factor de Coincidencia de Lenguajes (20% del peso)**
+   - 100% si todos los lenguajes de la empresa están presentes
+   - Penalización proporcional por lenguajes faltantes
+   - Formula: `overlap = len(comunes) / len(empresa_langs) * 100`
 
-```json
-{
-  "nombres": {
-    "descriptividad": 0.81          // Qué tan descriptivos son los nombres (0-1)
-  },
-  "documentacion": {
-    "cobertura_docstrings": 0.25    // % de código documentado
-  },
-  "modularidad": {
-    "funciones_por_archivo": 2.6,    // Promedio de funciones/archivo
-    "clases_por_archivo": 0.0,       // Promedio de clases/archivo
-    "cohesion_promedio": 0.0,        // Qué tan cohesionadas están las clases
-    "acoplamiento_promedio": 0.4     // Nivel de dependencias entre módulos
-  },
-  "complejidad": {
-    "complejidad_ciclomatica": 0.58, // Complejidad del código (mejor cerca de 1)
-    "max_nivel_anidacion": 0.0,      // Profundidad máxima de anidación
-    "longitud_promedio_funciones": 0.85 // Tamaño apropiado de funciones
-  },
-  "manejo_errores": {
-    "cobertura_manejo_errores": 0.0,   // % código con manejo de errores
-    "especificidad_excepciones": 0.0,   // Uso de excepciones específicas
-    "densidad_try_except": 0.0          // Cantidad de bloques try-except
-  },
-  "pruebas": {
-    "cobertura_pruebas": 0.0,          // % código cubierto por tests
-    "densidad_asserts": 0.0,           // Cantidad de aserciones por test
-    "funciones_test": 0.0              // Número de funciones de prueba
-  },
-  "seguridad": {
-    "validacion_entradas": 0.0,        // Validación de inputs
-    "uso_funciones_peligrosas": 1.2,   // Evita funciones inseguras
-    "total_validaciones": 0.0          // Total de validaciones implementadas
-  },
-  "consistencia_estilo": {
-    "consistencia_nombres": 0.67,      // Adherencia a convenciones de nombres
-    "espaciado_consistente": 0.38,     // Formato consistente
-    "longitud_lineas_consistente": 0.77 // Líneas de longitud apropiada
-  }
-}
+3. **Factores de Ajuste (10% del peso)**
+   - Tamaño del proyecto: proyectos similares obtienen bonus
+   - Excelencia en áreas críticas: +2% por cada categoría 20% superior
+   - Importancia del lenguaje: Python/TypeScript/C++ tienen factor 1.1x
+
+#### 🔍 Tipos de Similitud
+
+- **Similitud Coseno**: Para métricas directas (nombres, documentación)
+- **Similitud Inversa**: Para complejidad (menor es mejor)
+- **Similitud Umbral**: Para seguridad/pruebas (debe igualar o superar)
+
+#### Interpretación de Resultados
+
+| Puntuación | Nivel | Descripción | Recomendación |
+|------------|-------|-------------|---------------|
+| 90-100% | 🌟 Excelente | Estilo muy alineado con la empresa | Candidato altamente recomendado |
+| 75-89% | ✅ Bueno | Buena alineación con áreas menores de mejora | Recomendado con capacitación menor |
+| 60-74% | 🟡 Aceptable | Alineación moderada, requiere adaptación | Viable con plan de capacitación |
+| 45-59% | 🟠 Bajo | Baja alineación con el estilo empresarial | Requiere capacitación significativa |
+| 0-44% | 🔴 Muy Bajo | Estilo muy diferente | No recomendado sin capacitación extensiva |
+
+## 🏗️ Arquitectura del Sistema
+
+```mermaid
+graph TB
+    A[Usuario] --> B[CLI Interface]
+    B --> C[GitHub API Client]
+    C --> D[Repository Fetcher]
+    D --> E[Language Detector]
+    E --> F[Analyzer Factory]
+    
+    F --> G[Python Analyzer<br/>AST-based]
+    F --> H[JS/TS Analyzer<br/>Regex-based]
+    F --> I[Java Analyzer<br/>Pattern-based]
+    F --> J[Other Language<br/>Analyzers]
+    
+    G --> K[Metrics Aggregator]
+    H --> K
+    I --> K
+    J --> K
+    
+    K --> L[Empathy Algorithm]
+    L --> M[Score Calculator]
+    M --> N[Report Generator]
+    
+    N --> O[HTML Dashboard]
+    N --> P[JSON Export]
+    N --> Q[TXT Report]
+    
+    R[Cache Manager] --> D
+    S[Parallel Processor] --> F
 ```
 
-### 📈 Interpretación de resultados
+### 📊 Diagrama de Secuencia
 
-#### Escala de evaluación
-- 🔴 0.0-0.3: Necesita mejora urgente
-- 🟡 0.3-0.6: Cumple estándares mínimos
-- 🟢 0.6-0.8: Buenas prácticas
-- 🌟 0.8-1.0: Excelente implementación
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant CLI as CLI Interface
+    participant GH as GitHub API
+    participant AF as Analyzer Factory
+    participant LA as Language Analyzers
+    participant EA as Empathy Algorithm
+    participant EX as Exporters
+    
+    U->>CLI: Ejecuta comando con URLs
+    CLI->>CLI: Valida parámetros
+    CLI->>GH: Solicita repo empresa
+    GH-->>CLI: Metadata + archivos
+    CLI->>GH: Solicita repo candidato
+    GH-->>CLI: Metadata + archivos
+    
+    CLI->>AF: Envía archivos para análisis
+    AF->>AF: Detecta lenguajes
+    
+    loop Para cada lenguaje
+        AF->>LA: Crea analizador específico
+        LA->>LA: Analiza métricas
+        LA-->>AF: Retorna métricas
+    end
+    
+    AF-->>CLI: Métricas agregadas
+    
+    CLI->>EA: Calcula empatía
+    EA->>EA: Pondera categorías
+    EA->>EA: Calcula overlap lenguajes
+    EA->>EA: Aplica ajustes
+    EA-->>CLI: Score + recomendaciones
+    
+    CLI->>EX: Genera reportes
+    EX->>EX: Renderiza templates
+    EX-->>CLI: Archivos generados
+    
+    CLI-->>U: Muestra resultados
+```
 
-#### Puntos destacados
-- **Nombres**: Excelente descriptividad (0.81)
-- **Documentación**: Necesita mejora significativa (0.25)
-- **Modularidad**: Buen balance de funciones por archivo (2.6)
-- **Complejidad**: Mantenible y legible (0.58)
-- **Seguridad**: Excelente evitación de funciones peligrosas (1.2)
-- **Consistencia**: Buena adherencia a estándares de código (0.77)
 
-#### Áreas de mejora
-1. 📚 Aumentar cobertura de documentación
-2. ⚠️ Implementar manejo de errores
-3. 🧪 Añadir pruebas unitarias
-4. 🔒 Mejorar validación de entradas
+### 🔧 Componentes Principales
 
-### 🎯 Puntuación final de empatía
+1. **Language Analyzers** (`src/language_analyzers/`)
+   - Analizador base abstracto con patrón Template Method
+   - 12 implementaciones específicas por lenguaje
+   - Python usa AST, otros usan regex optimizados
 
-La puntuación se calcula ponderando cada categoría:
+2. **Empathy Algorithm** (`src/empathy_algorithm.py`)
+   - Cálculo de similitud coseno
+   - Ponderación por importancia de lenguaje
+   - Sistema de recomendaciones inteligente
 
-```python
-empatia_final = (
-    nombres * 0.15 +              # 0.81 * 0.15 = 0.122
-    documentacion * 0.15 +        # 0.25 * 0.15 = 0.038
-    modularidad * 0.15 +          # 0.40 * 0.15 = 0.060
-    complejidad * 0.15 +          # 0.58 * 0.15 = 0.087
-    manejo_errores * 0.10 +       # 0.00 * 0.10 = 0.000
-    pruebas * 0.10 +              # 0.00 * 0.10 = 0.000
-    seguridad * 0.10 +            # 1.20 * 0.10 = 0.120
-    consistencia * 0.10           # 0.77 * 0.10 = 0.077
-)                                 # Total = 0.504 (Cumple estándares básicos)
-``` 
+3. **Parallel Processing** (`src/parallel_analyzer.py`)
+   - Análisis concurrente de múltiples archivos
+   - Optimización para repositorios grandes
+
+4. **Cache System** (`src/cache_manager.py`)
+   - Evita re-análisis innecesarios
+   - TTL configurable (24 horas por defecto)
+
+5. **Export System** (`src/exporters.py`)
+   - Templates Jinja2 para HTML
+   - Dashboards interactivos con Chart.js
+   - Formatos múltiples (JSON, TXT, HTML)
 
 ## 🚀 Inicio Rápido
 
 ### Prerrequisitos
-- Python 3.8+
-- Git
-- Token de GitHub con permisos de lectura
+
+- Python 3.8 o superior
+- Token de GitHub con permisos de lectura de repositorios
+- 500MB de espacio libre para caché
 
 ### Instalación
 
 ```bash
-# Clonar repositorio
-git clone https://github.com/686f6c61/code-empathizer.git
-cd code-empathizer
+# Clonar el repositorio
+git clone https://github.com/686f6c61/Repo-Code-Empathizer.git
+cd Repo-Code-Empathizer
 
-# Configurar entorno virtual
+# Crear entorno virtual
 python3 -m venv venv
-source venv/bin/activate  # Linux/Mac
-.\venv\Scripts\activate   # Windows
+source venv/bin/activate  # En Windows: venv\Scripts\activate
 
 # Instalar dependencias
 pip install -r requirements.txt
 
-# Configurar token
-cp .env.example .env
-# Editar .env y añadir: GITHUB_TOKEN=tu_token_aquí
+# Configurar token de GitHub
+echo "GITHUB_TOKEN=tu_token_aqui" > .env
 ```
 
 ### Uso Básico
 
 ```bash
-python3 src/main.py
+# Modo interactivo (recomendado)
+python src/main.py
+
+# Comparación directa
+python src/main.py --empresa "empresa/repo-master" --candidato "candidato/repo-portfolio"
+
+# Con todas las opciones
+python src/main.py \
+  --empresa "empresa/repo-master" \
+  --candidato "candidato/repo-portfolio" \
+  --output all \
+  --no-cache
 ```
 
+### Uso con URLs de GitHub
 
+La herramienta acepta URLs completas de GitHub o el formato usuario/repositorio:
 
-#
-## 📁 Estructura del Proyecto
+```bash
+# Formato usuario/repositorio
+python src/main.py \
+  --empresa "facebook/react" \
+  --candidato "vuejs/core"
 
-```
-code-empathizer/
-├── src/
-│   ├── exporter/           # Carpeta de informes en TXT,JSON y HTML  
-│   ├── main.py             # Punto de entrada
-│   ├── github_utils.py     # Utilidades GitHub
-│   ├── analyzers.py        # Analizadores
-│   └── exporters.py        # Exportadores
-├── REPO.txt/               # Repositorios para seleccionar
-├── requirements.txt        # Dependencias
-└── .env                    # Configuración
+# URLs completas de GitHub
+python src/main.py \
+  --empresa "https://github.com/django/django" \
+  --candidato "https://github.com/pallets/flask"
 ```
 
+#### 💼 Casos de Uso Típicos
 
-## 📜 Licencia
+1. **Empresa evaluando candidato**:
+   ```bash
+   python src/main.py --empresa "mi-empresa/codigo-principal" --candidato "candidato/portfolio"
+   ```
 
-Distribuido bajo la Licencia MIT. Ver `LICENSE` para más información.
+2. **Comparación con proyectos de referencia**:
+   ```bash
+   python src/main.py --empresa "airbnb/javascript" --candidato "mi-codigo/proyecto"
+   ```
 
-## 👥 Autores
+## 📊 Formato de Reportes
 
-- **@686f6c61** - *Desarrollo inicial* - [GitHub](https://github.com/686f6c61)
+### Reporte de Análisis
+```
+╔═══════════════════════════════════════════════════════════════╗
+║              ANÁLISIS DE EMPATÍA EMPRESA-CANDIDATO             ║
+╚═══════════════════════════════════════════════════════════════╝
 
+EMPRESA: TechCorp/main-backend
+  • Lenguaje principal: Python
+  • Lenguajes analizados: Python, JavaScript, SQL
+  • Archivos analizados: 127
+
+CANDIDATO: johndoe/backend-portfolio  
+  • Lenguaje principal: Python
+  • Lenguajes analizados: Python, JavaScript
+  • Archivos analizados: 45
+
+📊 PUNTUACIÓN DE EMPATÍA: 82.5%
+   Bueno: Buena alineación con algunas áreas de mejora
+   Candidato recomendado con capacitación menor
+
+📈 Puntuaciones por Categoría:
+  • Nombres Descriptivos: 88.3% ✅
+  • Documentación: 65.2% 🟡
+  • Modularidad: 91.5% ✅
+  • Complejidad: 78.9% ✅
+  • Manejo De Errores: 72.1% 🟡
+  • Pruebas: 55.8% 🟠
+  • Seguridad: 85.0% ✅
+  • Consistencia Estilo: 90.2% ✅
+
+💡 Recomendaciones Principales:
+  1. Implementar más pruebas: Aumente la cobertura de pruebas unitarias
+  2. Aumentar documentación: Añada más comentarios y documentación al código
+  3. Lenguajes faltantes: Considere añadir proyectos en: SQL
+```
+
+## 🛠️ Configuración Avanzada
+
+### Variables de Entorno
+
+```bash
+# .env
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx        # Token de GitHub (requerido)
+CACHE_TTL=86400                      # Tiempo de vida del caché en segundos
+PARALLEL_WORKERS=4                   # Número de workers paralelos
+ANALYSIS_TIMEOUT=300                 # Timeout por repositorio en segundos
+```
+
+### Configuración YAML
+
+```yaml
+# config.yaml
+analysis:
+  max_files_per_language: 100
+  ignore_patterns:
+    - "*/test/*"
+    - "*/vendor/*"
+    - "*/node_modules/*"
+  
+weights:
+  nombres: 0.15
+  documentacion: 0.20  # Aumentar importancia de docs
+  modularidad: 0.15
+  complejidad: 0.15
+  manejo_errores: 0.10
+  pruebas: 0.10
+  seguridad: 0.10
+  consistencia_estilo: 0.05
+
+languages:
+  importance_multiplier:
+    Python: 1.2      # Si Python es crítico para tu empresa
+    JavaScript: 1.0
+    TypeScript: 1.1
+```
+
+## 📈 Casos de Uso Empresariales
+
+### 1. **Proceso de Contratación**
+- Pre-screening automatizado de candidatos
+- Evaluación objetiva basada en código real
+- Reducción de tiempo en entrevistas técnicas
+
+### 2. **Onboarding de Desarrolladores**
+- Identificar áreas de capacitación necesarias
+- Plan personalizado de adaptación
+- Métricas de progreso en el tiempo
+
+### 3. **Auditoría de Código**
+- Evaluar consistencia en equipos distribuidos
+- Identificar desviaciones de estándares
+- Mejorar calidad general del código
+
+### 4. **Evaluación de Consultores**
+- Verificar alineación antes de contratar
+- Evaluar capacidad de adaptación
+- Minimizar fricción en proyectos
+
+## 🔒 Seguridad y Privacidad
+
+- ✅ **Solo lectura**: Nunca modifica repositorios
+- ✅ **Token seguro**: Almacenado localmente en .env
+- ✅ **Sin datos sensibles**: Solo analiza estructura, no contenido
+- ✅ **Caché local**: Los datos no salen de tu máquina
+- ✅ **Open source**: Código completamente auditable
+
+## 🤝 Contribuciones
+
+¡Las contribuciones son bienvenidas! Por favor:
+
+1. Fork el repositorio
+2. Crea una rama para tu feature (`git checkout -b feature/NuevoAnalizador`)
+3. Commit tus cambios (`git commit -am 'Add: Nuevo analizador para Rust'`)
+4. Push a la rama (`git push origin feature/NuevoAnalizador`)
+5. Abre un Pull Request
+
+### Áreas de Contribución
+
+- 🌐 Nuevos analizadores de lenguajes
+- 🧪 Mejoras en detección de patrones
+- 📊 Nuevas métricas de análisis
+- 🎨 Mejoras en la interfaz de reportes
+- 📝 Documentación
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
+
+## 👥 Equipo
+
+- **R. Benítez** - *Creador y mantenedor principal*
+
+## 🙏 Agradecimientos
+
+- GitHub por su excelente API
+- La comunidad open source por las librerías utilizadas
+- Todos los contribuidores y usuarios del proyecto
+
+---
+
+<div align="center">
+
+**[⬆ Volver arriba](#-repo-code-empathizer-v20)**
+
+Hecho con ❤️ para mejorar los procesos de contratación técnica
+
+</div>

@@ -1,0 +1,51 @@
+# Configuración de Repo Code Empathizer
+
+# Lenguajes a analizar
+languages:
+  - python
+  - javascript
+  - typescript
+  - java
+
+# Umbrales para métricas (0-1)
+thresholds:
+  nombres:
+    descriptividad: 0.7
+  documentacion:
+    cobertura: 0.6
+  complejidad:
+    ciclomatica: 0.7
+  manejo_errores:
+    cobertura: 0.5
+  pruebas:
+    cobertura: 0.4
+  seguridad:
+    validacion: 0.8
+  consistencia_estilo:
+    consistencia: 0.7
+
+# Pesos para el cálculo de empatía
+weights:
+  nombres: 0.15
+  documentacion: 0.15
+  modularidad: 0.15
+  complejidad: 0.15
+  manejo_errores: 0.10
+  pruebas: 0.10
+  seguridad: 0.10
+  consistencia_estilo: 0.10
+
+# Configuración de análisis
+analysis:
+  # Tamaño máximo de archivo en KB
+  max_file_size: 500
+  # Extensiones adicionales a analizar
+  additional_extensions: []
+  # Directorios a ignorar
+  ignore_dirs:
+    - node_modules
+    - venv
+    - __pycache__
+    - .git
+    - dist
+    - build

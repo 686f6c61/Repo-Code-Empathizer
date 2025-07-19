@@ -1,3 +1,23 @@
+"""
+Módulo de utilidades para interacción con la API de GitHub.
+
+Este módulo proporciona una interfaz completa para analizar repositorios
+de GitHub, extrayendo archivos de código, analizando métricas de calidad
+y gestionando límites de la API.
+
+Classes:
+    GitHubRepo: Cliente principal para interactuar con repositorios de GitHub.
+
+Example:
+    >>> github = GitHubRepo()
+    >>> metrics = github.analizar_repo("usuario/repositorio")
+    >>> print(f"Lenguaje principal: {metrics['metadata']['lenguaje_principal']}")
+
+Author: R. Benítez
+Version: 2.0.0
+License: MIT
+"""
+
 from github import Github, GithubException
 import os
 from typing import Dict, Any, List
@@ -9,11 +29,30 @@ import re
 import pytz
 import time
 from datetime import datetime
-from analyzers import CodeAnalyzer
+from language_analyzers.factory import AnalyzerFactory
 
 logger = logging.getLogger(__name__)
 
 class GitHubRepo:
+    """
+    Cliente para interactuar con repositorios de GitHub.
+    
+    Esta clase proporciona métodos para analizar repositorios de GitHub,
+    extrayendo código fuente y calculando métricas de calidad mediante
+    los analizadores de lenguaje disponibles.
+    
+    Gestiona automáticamente los límites de la API de GitHub y proporciona
+    reintentos cuando se alcanzan los límites de velocidad.
+    
+    Attributes:
+        token (str): Token de autenticación de GitHub.
+        github (Github): Cliente de PyGithub.
+    
+    Raises:
+        ValueError: Si no se encuentra el token de GitHub en las variables
+            de entorno.
+    """
+    
     def __init__(self):
         self.token = os.getenv("GITHUB_TOKEN")
         if not self.token:
@@ -38,23 +77,26 @@ class GitHubRepo:
                 "tamano_kb": float(repo.size)
             }
             
-            # Obtener archivos Python
-            archivos_python = []
+            # Obtener archivos de código soportados
+            archivos_codigo = {}
+            extensiones_soportadas = AnalyzerFactory.get_supported_extensions()
+            
             try:
                 contents = repo.get_contents("")
                 while contents:
                     file_content = contents.pop(0)
                     if file_content.type == "dir":
                         contents.extend(repo.get_contents(file_content.path))
-                    elif file_content.path.endswith('.py'):
-                        try:
-                            contenido = repo.get_contents(file_content.path).decoded_content.decode('utf-8')
-                            archivos_python.append({
-                                'path': file_content.path,
-                                'content': contenido
-                            })
-                        except Exception as e:
-                            logger.warning(f"Error leyendo {file_content.path}: {str(e)}")
+                    else:
+                        # Verificar si el archivo tiene una extensión soportada
+                        for ext in extensiones_soportadas:
+                            if file_content.path.endswith(ext):
+                                try:
+                                    contenido = repo.get_contents(file_content.path).decoded_content.decode('utf-8')
+                                    archivos_codigo[file_content.path] = contenido
+                                except Exception as e:
+                                    logger.warning(f"Error leyendo {file_content.path}: {str(e)}")
+                                break
             except Exception as e:
                 logger.error(f"Error obteniendo contenido del repo: {str(e)}")
 
@@ -96,29 +138,27 @@ class GitHubRepo:
                 }
             }
 
-            # Analizar cada archivo
-            analyzer = CodeAnalyzer()
-            for archivo in archivos_python:
-                try:
-                    tree = ast.parse(archivo['content'])
-                    metricas_archivo = analyzer.analizar_archivo(archivo['content'])
+            # Analizar archivos usando el factory multi-lenguaje
+            if archivos_codigo:
+                analisis_multi = AnalyzerFactory.analyze_multi_language_project(archivos_codigo)
+                
+                # Extraer métricas del lenguaje principal o hacer promedio ponderado
+                if analisis_multi['primary_language']:
+                    lenguaje_principal = analisis_multi['primary_language']
+                    metricas_principales = analisis_multi['languages'][lenguaje_principal]['metrics']
                     
-                    # Acumular métricas asegurando tipos numéricos
-                    for categoria, valores in metricas_archivo.items():
-                        if isinstance(valores, dict) and categoria in metricas_totales:
-                            for metrica, valor in valores.items():
-                                if metrica in metricas_totales[categoria]:
-                                    # Convertir a float para asegurar operaciones numéricas
-                                    metricas_totales[categoria][metrica] += float(valor)
-                except Exception as e:
-                    logger.warning(f"Error analizando {archivo['path']}: {str(e)}")
-
-            # Promediar métricas
-            num_archivos = len(archivos_python) or 1
-            for categoria, valores in metricas_totales.items():
-                if isinstance(valores, dict) and categoria != 'metadata':
-                    for metrica in valores:
-                        valores[metrica] = float(valores[metrica]) / num_archivos
+                    # Actualizar métricas totales con las del análisis
+                    for categoria in metricas_totales:
+                        if categoria != 'metadata' and categoria in metricas_principales:
+                            metricas_totales[categoria] = metricas_principales[categoria]
+                
+                # Agregar información sobre lenguajes analizados
+                if 'total_metrics' in analisis_multi:
+                    metricas_totales['metadata']['lenguajes_analizados'] = analisis_multi['total_metrics'].get('languages_analyzed', [])
+                    metricas_totales['metadata']['archivos_analizados'] = analisis_multi['total_metrics'].get('total_files', 0)
+                    metricas_totales['metadata']['empathy_score_global'] = analisis_multi['total_metrics'].get('overall_empathy_score', 0)
+            else:
+                logger.warning("No se encontraron archivos de código soportados en el repositorio")
 
             return metricas_totales
 
@@ -190,26 +230,34 @@ class GitHubRepo:
             logger.error(f"Error obteniendo info del repo: {str(e)}")
             raise
 
-    def get_python_files(self, repo_url: str) -> List[Dict[str, Any]]:
-        """Obtiene todos los archivos Python del repositorio"""
+    def get_code_files(self, repo_url: str, extensions: List[str] = None) -> Dict[str, str]:
+        """Obtiene todos los archivos de código del repositorio"""
         try:
             repo = self.github.get_repo(repo_url)
             contents = repo.get_contents("")
-            python_files = []
+            code_files = {}
+            
+            # Si no se especifican extensiones, usar todas las soportadas
+            if extensions is None:
+                extensions = AnalyzerFactory.get_supported_extensions()
 
             while contents:
                 file_content = contents.pop(0)
                 if file_content.type == "dir":
                     contents.extend(repo.get_contents(file_content.path))
-                elif file_content.path.endswith(".py"):
-                    python_files.append({
-                        "path": file_content.path,
-                        "content": file_content.decoded_content.decode()
-                    })
+                else:
+                    # Verificar si el archivo tiene una extensión soportada
+                    for ext in extensions:
+                        if file_content.path.endswith(ext):
+                            try:
+                                code_files[file_content.path] = file_content.decoded_content.decode('utf-8')
+                            except Exception as e:
+                                logger.warning(f"Error decodificando {file_content.path}: {str(e)}")
+                            break
 
-            return python_files
+            return code_files
         except Exception as e:
-            logger.error(f"Error obteniendo archivos Python: {str(e)}")
+            logger.error(f"Error obteniendo archivos de código: {str(e)}")
             raise
 
     @staticmethod

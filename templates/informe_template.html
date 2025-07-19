@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ titulo }}</title>
+    <title>Code Empathizer - Evaluación de Código Empresa-Candidato</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .positive { color: #198754; font-weight: bold; }
-        .negative { color: #dc3545; font-weight: bold; }
+        .positive { color: #000000; font-weight: bold; }
+        .negative { color: #666666; font-weight: bold; }
         .metric-card { height: 100%; }
         .repo-comparison { background-color: #f8f9fa; padding: 20px; border-radius: 10px; }
-        .difference-arrow { font-size: 2em; color: #6c757d; }
+        .difference-arrow { font-size: 2em; color: #333333; }
         .metric-value { font-size: 1.2em; font-weight: bold; }
         .chart-container { height: 300px; }
     </style>
@@ -22,8 +22,8 @@
     <div class="container py-5">
         <div class="row mb-4">
             <div class="col-12 text-center">
-                <h1 class="display-4">{{ titulo }}</h1>
-                <p class="lead">Análisis comparativo de empatía en el código</p>
+                <h1 class="display-4">Code Empathizer</h1>
+                <p class="lead">Evaluación de Código Empresa-Candidato</p>
             </div>
         </div>
 
@@ -32,50 +32,42 @@
             {% for repo_tipo, repo_data in metricas.repos.items() %}
             <div class="col-md-6">
                 <div class="card h-100">
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header bg-dark text-white">
                         <h3 class="card-title mb-0">
-                            {% if repo_tipo == 'master' %}
-                            <i class="fas fa-star me-2"></i>
+                            {% if repo_tipo == 'empresa' %}
+                            Repositorio Empresa
                             {% else %}
-                            <i class="fas fa-code-compare me-2"></i>
+                            Repositorio Candidato
                             {% endif %}
-                            Repositorio {{ repo_tipo|title }}
                         </h3>
                     </div>
                     <div class="card-body">
                         {% if repo_data and repo_data.metadata %}
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <i class="fas fa-box me-2"></i>
                                 <strong>Nombre:</strong> {{ repo_data.metadata.nombre|default('N/A') }}
                             </li>
                             <li class="list-group-item">
-                                <i class="fas fa-link me-2"></i>
                                 <strong>URL:</strong> 
                                 <a href="{{ repo_data.metadata.url|default('#') }}" target="_blank">
                                     {{ repo_data.metadata.url|default('N/A') }}
                                 </a>
                             </li>
                             <li class="list-group-item">
-                                <i class="fas fa-file-alt me-2"></i>
                                 <strong>Descripción:</strong> {{ repo_data.metadata.descripcion|default('No disponible') }}
                             </li>
                             <li class="list-group-item">
-                                <i class="fas fa-calendar me-2"></i>
                                 <strong>Creado:</strong> {{ repo_data.metadata.fecha_creacion|default('N/A')|date }}
                             </li>
                             <li class="list-group-item">
-                                <i class="fas fa-code me-2"></i>
                                 <strong>Lenguaje:</strong> {{ repo_data.metadata.lenguaje_principal|default('N/A') }}
                             </li>
                             <li class="list-group-item">
-                                <i class="fas fa-weight me-2"></i>
                                 <strong>Tamaño:</strong> {{ repo_data.metadata.tamano_kb|default(0)|round(2) }} KB
                             </li>
                         </ul>
                         {% else %}
                         <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
                             No hay datos disponibles para este repositorio
                         </div>
                         {% endif %}
@@ -87,9 +79,8 @@
 
         <!-- Tabla de Información de Métricas -->
         <div class="card mb-5">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-secondary text-white">
                 <h3 class="card-title mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
                     Métricas Analizadas
                 </h3>
             </div>
@@ -205,13 +196,13 @@
         <!-- Comparación de Métricas -->
         {% for categoria in categorias %}
         <div class="card mb-4">
-            <div class="card-header bg-secondary text-white">
+            <div class="card-header bg-dark text-white">
                 <h3 class="mb-0">{{ categoria|title }}</h3>
             </div>
             <div class="card-body">
                 <div class="row">
                     {% for repo_tipo, repo_data in metricas.repos.items() %}
-                    <div class="col-md-5 {% if repo_tipo == 'master' %}text-end{% endif %}">
+                    <div class="col-md-5 {% if repo_tipo == 'empresa' %}text-end{% endif %}">
                         {% if repo_data and categoria in repo_data %}
                         <div class="metric-values">
                             {% for metrica, valor in repo_data[categoria].items() %}
@@ -226,7 +217,7 @@
                     {% if loop.first %}
                     <div class="col-md-2 text-center">
                         <div class="difference-arrow">
-                            <i class="fas fa-arrows-left-right"></i>
+                            ↔
                         </div>
                     </div>
                     {% endif %}
@@ -248,9 +239,9 @@
                                     <span class="{{ 'positive' if diferencia > 0 else 'negative' if diferencia < 0 else '' }}">
                                         {{ diferencia|round(3) }}
                                         {% if diferencia > 0 %}
-                                        <i class="fas fa-arrow-up"></i>
+                                        ↑
                                         {% elif diferencia < 0 %}
-                                        <i class="fas fa-arrow-down"></i>
+                                        ↓
                                         {% endif %}
                                     </span>
                                 </div>
@@ -264,64 +255,66 @@
         </div>
         {% endfor %}
 
-        <!-- Conclusión -->
+        <!-- Análisis de Empatía -->
         <div class="card mb-5">
             <div class="card-header bg-dark text-white">
                 <h3 class="card-title mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    Conclusión
+                    Análisis de Empatía Empresa-Candidato
                 </h3>
             </div>
             <div class="card-body">
+                {% if metricas.empathy_analysis %}
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="card bg-light h-100">
+                    <div class="col-md-12">
+                        <div class="card bg-light">
                             <div class="card-body text-center">
-                                <h4 class="card-title">Repositorio Master</h4>
-                                <p class="display-4 mb-0">
-                                    {{ (metricas.puntuacion_master|default(0))|round(2) }}
+                                <h2 class="card-title">Puntuación de Empatía</h2>
+                                <p class="display-1 mb-0 {{ 'text-dark' if metricas.empathy_analysis.empathy_score >= 75 else 'text-secondary' if metricas.empathy_analysis.empathy_score >= 60 else 'text-muted' }}">
+                                    {{ metricas.empathy_analysis.empathy_score|round(2) }}%
                                 </p>
-                                <p class="text-muted">Puntuación total</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light h-100">
-                            <div class="card-body text-center">
-                                <h4 class="card-title">Repositorio Comparado</h4>
-                                <p class="display-4 mb-0">
-                                    {{ (metricas.puntuacion_comparado|default(0))|round(2) }}
-                                </p>
-                                <p class="text-muted">Puntuación total</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card h-100">
-                            <div class="card-body text-center">
-                                <h4 class="card-title">Diferencia</h4>
-                                {% set diferencia = (metricas.puntuacion_master|default(0)) - (metricas.puntuacion_comparado|default(0)) %}
-                                <p class="display-4 mb-0 {{ 'positive' if diferencia > 0 else 'negative' if diferencia < 0 else '' }}">
-                                    {{ '+' if diferencia > 0 }}{{ diferencia|round(2) }}
-                                    {% if diferencia != 0 %}
-                                        <i class="fas fa-arrow-{{ 'up' if diferencia > 0 else 'down' }} ms-2"></i>
-                                    {% endif %}
-                                </p>
-                                <p class="text-muted">Diferencia total</p>
+                                <h4 class="mt-3">{{ metricas.empathy_analysis.interpretation.level }}</h4>
+                                <p class="lead">{{ metricas.empathy_analysis.interpretation.description }}</p>
+                                <p class="text-muted">{{ metricas.empathy_analysis.interpretation.recommendation }}</p>
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Información de Repositorios -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Empresa</h5>
+                                <p class="mb-0">{{ metricas.repos.empresa.metadata.nombre }}</p>
+                                <small class="text-muted">{{ metricas.repos.empresa.metadata.lenguaje_principal }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Candidato</h5>
+                                <p class="mb-0">{{ metricas.repos.candidato.metadata.nombre }}</p>
+                                <small class="text-muted">{{ metricas.repos.candidato.metadata.lenguaje_principal }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-warning">
+                    No se pudo calcular la puntuación de empatía
+                </div>
+                {% endif %}
 
                 <!-- Recomendaciones -->
                 {% if metricas.recomendaciones %}
                 <div class="mt-4">
-                    <h4><i class="fas fa-lightbulb me-2"></i>Recomendaciones</h4>
+                    <h4>Recomendaciones</h4>
                     <ul class="list-group">
                         {% for recomendacion in metricas.recomendaciones %}
                         <li class="list-group-item">
-                            <i class="fas fa-check-circle me-2 text-success"></i>
-                            {{ recomendacion }}
+                            • {{ recomendacion }}
                         </li>
                         {% endfor %}
                     </ul>
@@ -331,25 +324,24 @@
                 <!-- Análisis Detallado -->
                 <div class="card-body border-top mt-4">
                     <h4 class="mb-4">
-                        <i class="fas fa-chart-bar me-2"></i>
                         Análisis Detallado
                     </h4>
                     
                     <div class="row">
                         <!-- Mejor Repositorio -->
                         <div class="col-12 mb-4">
-                            <div class="alert alert-success">
+                            <div class="alert alert-secondary">
                                 <h5 class="alert-heading">
-                                    <i class="fas fa-trophy me-2"></i>
                                     Repositorio con Mejor Desempeño
                                 </h5>
                                 <p class="mb-0">
-                                    {% if metricas.puntuacion_master > metricas.puntuacion_comparado %}
-                                        El repositorio <strong>{{ metricas.repos.master.metadata.nombre }}</strong> tiene mejor desempeño general
-                                        con una puntuación de {{ metricas.puntuacion_master|round(2) }}.
+                                    {% if metricas.empathy_analysis %}
+                                        <strong>Puntuación de Empatía: {{ metricas.empathy_analysis.empathy_score|round(2) }}%</strong><br>
+                                        Nivel: {{ metricas.empathy_analysis.interpretation.level }}<br>
+                                        {{ metricas.empathy_analysis.interpretation.description }}
                                     {% else %}
-                                        El repositorio <strong>{{ metricas.repos.comparado.metadata.nombre }}</strong> tiene mejor desempeño general
-                                        con una puntuación de {{ metricas.puntuacion_comparado|round(2) }}.
+                                        El análisis de empatía entre <strong>{{ metricas.repos.empresa.metadata.nombre }}</strong> (empresa) y
+                                        <strong>{{ metricas.repos.candidato.metadata.nombre }}</strong> (candidato) se ha completado.
                                     {% endif %}
                                 </p>
                             </div>
@@ -359,16 +351,14 @@
                         {% for repo_tipo, repo_data in metricas.repos.items() %}
                         <div class="col-md-6 mb-4">
                             <div class="card h-100">
-                                <div class="card-header {% if repo_tipo == 'master' %}bg-primary{% else %}bg-secondary{% endif %} text-white">
+                                <div class="card-header {% if repo_tipo == 'empresa' %}bg-dark{% else %}bg-secondary{% endif %} text-white">
                                     <h5 class="card-title mb-0">
-                                        <i class="fas {% if repo_tipo == 'master' %}fa-star{% else %}fa-code-compare{% endif %} me-2"></i>
-                                        {{ repo_data.metadata.nombre }}
+                                        {{ repo_data.metadata.nombre }} ({{ repo_tipo|title }})
                                     </h5>
                                 </div>
                                 <div class="card-body">
                                     <!-- Mejores Métricas -->
-                                    <h6 class="text-success">
-                                        <i class="fas fa-arrow-up me-2"></i>
+                                    <h6 class="text-dark">
                                         Mejores Métricas
                                     </h6>
                                     <ul class="list-group list-group-flush mb-4">
@@ -377,7 +367,7 @@
                                                 {% if valor >= 0.7 %}
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     {{ metrica|replace('_', ' ')|title }}
-                                                    <span class="badge bg-success rounded-pill">{{ valor|round(3) }}</span>
+                                                    <span class="badge bg-dark rounded-pill">{{ valor|round(3) }}</span>
                                                 </li>
                                                 {% endif %}
                                             {% endfor %}
@@ -385,8 +375,7 @@
                                     </ul>
 
                                     <!-- Peores Métricas -->
-                                    <h6 class="text-danger">
-                                        <i class="fas fa-arrow-down me-2"></i>
+                                    <h6 class="text-secondary">
                                         Métricas por Mejorar
                                     </h6>
                                     <ul class="list-group list-group-flush">
@@ -395,7 +384,7 @@
                                                 {% if valor < 0.4 %}
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     {{ metrica|replace('_', ' ')|title }}
-                                                    <span class="badge bg-danger rounded-pill">{{ valor|round(3) }}</span>
+                                                    <span class="badge bg-secondary rounded-pill">{{ valor|round(3) }}</span>
                                                 </li>
                                                 {% endif %}
                                             {% endfor %}
@@ -412,9 +401,8 @@
 
         <!-- Explicación de Cálculos -->
         <div class="card mb-5">
-            <div class="card-header bg-info text-white">
+            <div class="card-header bg-dark text-white">
                 <h3 class="card-title mb-0">
-                    <i class="fas fa-calculator me-2"></i>
                     Metodología de Cálculo
                 </h3>
             </div>
@@ -424,7 +412,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNombres">
-                                <i class="fas fa-tag me-2"></i> Cálculo de Nombres
+                                Cálculo de Nombres
                             </button>
                         </h2>
                         <div id="collapseNombres" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -444,7 +432,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDocumentacion">
-                                <i class="fas fa-file-alt me-2"></i> Cálculo de Documentación
+                                Cálculo de Documentación
                             </button>
                         </h2>
                         <div id="collapseDocumentacion" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -463,7 +451,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseModularidad">
-                                <i class="fas fa-cubes me-2"></i> Cálculo de Modularidad
+                                Cálculo de Modularidad
                             </button>
                         </h2>
                         <div id="collapseModularidad" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -488,7 +476,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseComplejidad">
-                                <i class="fas fa-code-branch me-2"></i> Cálculo de Complejidad
+                                Cálculo de Complejidad
                             </button>
                         </h2>
                         <div id="collapseComplejidad" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -517,7 +505,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseErrores">
-                                <i class="fas fa-exclamation-triangle me-2"></i> Cálculo de Manejo de Errores
+                                Cálculo de Manejo de Errores
                             </button>
                         </h2>
                         <div id="collapseErrores" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -537,7 +525,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePruebas">
-                                <i class="fas fa-vial me-2"></i> Cálculo de Pruebas
+                                Cálculo de Pruebas
                             </button>
                         </h2>
                         <div id="collapsePruebas" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -553,7 +541,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeguridad">
-                                <i class="fas fa-shield-alt me-2"></i> Cálculo de Seguridad
+                                Cálculo de Seguridad
                             </button>
                         </h2>
                         <div id="collapseSeguridad" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -573,7 +561,7 @@
                     <div class="accordion-item">
                         <h2 class="accordion-header">
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseConsistencia">
-                                <i class="fas fa-ruler me-2"></i> Cálculo de Consistencia
+                                Cálculo de Consistencia
                             </button>
                         </h2>
                         <div id="collapseConsistencia" class="accordion-collapse collapse" data-bs-parent="#calculosAccordion">
@@ -591,10 +579,10 @@
         <footer class="text-center text-muted mt-5 py-4 bg-light">
             <div class="container">
                 <p class="mb-1">
-                    Comparador de empatía de código - Recruitment 2024
+                    Code Empathizer v2.0 - R. Benítez
                 </p>
                 <p class="mb-0">
-                    Con 🤍 de <a href="https://github.com/686f6c61" class="text-decoration-none" target="_blank">@686f6c61</a>
+                    <a href="https://github.com/686f6c61/Repo-Code-Empathizer" class="text-decoration-none" target="_blank">GitHub</a>
                 </p>
             </div>
         </footer>

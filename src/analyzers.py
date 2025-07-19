@@ -1,3 +1,23 @@
+"""
+Módulo de análisis de código AST para Python.
+
+Este módulo proporciona un analizador completo de código Python basado en AST
+(Abstract Syntax Tree) que evalúa múltiples aspectos de calidad del código
+incluyendo nombres, documentación, modularidad, complejidad, y más.
+
+Classes:
+    CodeAnalyzer: Analizador principal de código Python.
+
+Example:
+    >>> analyzer = CodeAnalyzer()
+    >>> metrics = analyzer.analizar_archivo(codigo_python)
+    >>> print(f"Documentación: {metrics['documentacion']['cobertura_docstrings']}")
+
+Author: R. Benítez
+Version: 2.0.0
+License: MIT
+"""
+
 import ast
 import logging
 import copy
@@ -7,6 +27,25 @@ import re
 logger = logging.getLogger(__name__)
 
 class CodeAnalyzer:
+    """
+    Analizador de código Python basado en AST.
+    
+    Esta clase implementa un análisis exhaustivo del código Python evaluando
+    múltiples métricas de calidad incluyendo:
+    - Descriptividad de nombres
+    - Cobertura de documentación
+    - Modularidad y cohesión
+    - Complejidad ciclomática
+    - Manejo de errores
+    - Cobertura de pruebas
+    - Prácticas de seguridad
+    - Consistencia de estilo
+    
+    Attributes:
+        metricas (Dict[str, Dict[str, float]]): Diccionario con todas las
+            métricas inicializadas a 0.0.
+    """
+    
     def __init__(self):
         self.metricas = {
             'nombres': {'descriptividad': 0.0},
