@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repo Code Empathizer - Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .timestamp {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h3 {
+            color: #555;
+            margin: 20px 0 15px;
+            font-size: 1.2em;
+        }
+        
+        .repo-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .repo-info p {
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .metric-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .metric-name {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .metric-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.5s ease;
+        }
+        
+        .languages-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .language-tag {
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+        
+        .comparison-section {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-top: 40px;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .comparison-item {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .comparison-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 10px;
+        }
+        
+        .comparison-values {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .repo-value {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .repo1-value {
+            color: #667eea;
+        }
+        
+        .repo2-value {
+            color: #764ba2;
+        }
+        
+        .vs {
+            color: #999;
+            font-weight: normal;
+            margin: 0 10px;
+        }
+        
+        .winner {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+        
+        .empathy-score {
+            font-size: 3em;
+            font-weight: bold;
+            text-align: center;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .recommendations {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .recommendations h4 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .recommendations ul {
+            list-style: none;
+            padding-left: 20px;
+        }
+        
+        .recommendations li {
+            margin: 8px 0;
+            position: relative;
+        }
+        
+        .recommendations li:before {
+            content: "→";
+            position: absolute;
+            left: -20px;
+            color: #856404;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Repo Code Empathizer</h1>
+            <p>Análisis Comparativo de Empatía de Código</p>
+        </div>
+        
+        <div class="timestamp">
+            <p>📅 Generado el: {{ timestamp | format_date }}</p>
+        </div>
+        
+        <div class="grid">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data %}
+            <div class="card">
+                <h2>
+                    📂 Repositorio {{ repo_tipo | capitalize }}
+                </h2>
+                
+                <div class="repo-info">
+                    <p><strong>Nombre:</strong> {{ repo_data.metadata.nombre }}</p>
+                    <p><strong>URL:</strong> <a href="{{ repo_data.metadata.url }}" target="_blank">{{ repo_data.metadata.url }}</a></p>
+                    <p><strong>Descripción:</strong> {{ repo_data.metadata.descripcion }}</p>
+                    <p><strong>Lenguaje Principal:</strong> {{ repo_data.metadata.lenguaje_principal }}</p>
+                    {% if repo_data.metadata.lenguajes_analizados %}
+                    <p><strong>Lenguajes Analizados:</strong></p>
+                    <div class="languages-list">
+                        {% for lang in repo_data.metadata.lenguajes_analizados %}
+                        <span class="language-tag">{{ lang }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if repo_data.metadata.empathy_score_global %}
+                <div class="empathy-score">
+                    {{ "%.2f"|format(repo_data.metadata.empathy_score_global * 100) }}%
+                </div>
+                {% endif %}
+                
+                <h3>📊 Métricas Detalladas</h3>
+                <div class="metric-grid">
+                    {% for categoria, valores in repo_data.items() %}
+                    {% if categoria != 'metadata' and valores %}
+                        {% for metrica, valor in valores.items() %}
+                        <div class="metric-item">
+                            <div class="metric-name">{{ metrica | replace('_', ' ') | title }}</div>
+                            <div class="metric-value">{{ "%.2f"|format(valor * 100) }}%</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ valor * 100 }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="chart-{{ repo_tipo }}"></canvas>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <div class="comparison-section">
+            <h2>📈 Comparación de Métricas</h2>
+            
+            <div class="comparison-grid">
+                {% set categories = ['nombres', 'documentacion', 'complejidad', 'manejo_errores', 'pruebas', 'seguridad'] %}
+                {% for categoria in categories %}
+                <div class="comparison-item {% if metricas.repos.A[categoria] and metricas.repos.B[categoria] %}
+                    {% if metricas.repos.A[categoria].values()|sum > metricas.repos.B[categoria].values()|sum %}winner{% endif %}
+                {% endif %}">
+                    <div class="comparison-label">{{ categoria | replace('_', ' ') | title }}</div>
+                    <div class="comparison-values">
+                        {% if metricas.repos.A and metricas.repos.A[categoria] %}
+                        <span class="repo-value repo1-value">
+                            {{ "%.1f"|format((metricas.repos.A[categoria].values()|sum / metricas.repos.A[categoria]|length) * 100) }}%
+                        </span>
+                        {% else %}
+                        <span class="repo-value repo1-value">N/A</span>
+                        {% endif %}
+                        <span class="vs">vs</span>
+                        {% if metricas.repos.B and metricas.repos.B[categoria] %}
+                        <span class="repo-value repo2-value">
+                            {{ "%.1f"|format((metricas.repos.B[categoria].values()|sum / metricas.repos.B[categoria]|length) * 100) }}%
+                        </span>
+                        {% else %}
+                        <span class="repo-value repo2-value">N/A</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        {% if metricas.recomendaciones %}
+        <div class="recommendations">
+            <h4>💡 Recomendaciones</h4>
+            <ul>
+                {% for rec in metricas.recomendaciones %}
+                <li>{{ rec }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // Crear gráficos para cada repositorio
+        {% for repo_tipo, repo_data in metricas.repos.items() %}
+        {% if repo_data %}
+        const ctx{{ repo_tipo }} = document.getElementById('chart-{{ repo_tipo }}').getContext('2d');
+        const chart{{ repo_tipo }} = new Chart(ctx{{ repo_tipo }}, {
+            type: 'radar',
+            data: {
+                labels: [
+                    'Nombres',
+                    'Documentación',
+                    'Modularidad',
+                    'Complejidad',
+                    'Manejo de Errores',
+                    'Pruebas',
+                    'Seguridad',
+                    'Consistencia'
+                ],
+                datasets: [{
+                    label: 'Repositorio {{ repo_tipo }}',
+                    data: [
+                        {% for cat in ['nombres', 'documentacion', 'modularidad', 'complejidad', 'manejo_errores', 'pruebas', 'seguridad', 'consistencia_estilo'] %}
+                        {% if repo_data[cat] %}
+                        {{ (repo_data[cat].values()|sum / repo_data[cat]|length) * 100 }},
+                        {% else %}
+                        0,
+                        {% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    borderColor: 'rgba(102, 126, 234, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(102, 126, 234, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(102, 126, 234, 1)'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        {% endif %}
+        {% endfor %}
+    </script>
+</body>
+</html>
