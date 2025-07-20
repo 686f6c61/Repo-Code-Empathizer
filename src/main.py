@@ -28,6 +28,7 @@ import sys
 import argparse
 import logging
 from datetime import datetime
+from typing import List
 from dotenv import load_dotenv
 import yaml
 
@@ -54,6 +55,7 @@ COLORS = {
     'blue': '\033[94m',
     'cyan': '\033[96m',
     'green': '\033[92m',
+    'success': '\033[92m',  # Alias for green
     'warning': '\033[93m',
     'fail': '\033[91m',
     'end': '\033[0m',
@@ -116,6 +118,56 @@ def print_language_support() -> None:
     print(f"   {', '.join(extensions)}")
 
 
+def get_output_format() -> str:
+    """
+    Solicita al usuario que seleccione el formato de salida.
+    
+    Returns:
+        str: Formato seleccionado ('txt', 'json', 'html', 'dashboard', 'all').
+    """
+    print(f"\n{COLORS['blue']}📄 FORMATO DE SALIDA{COLORS['end']}")
+    print("─" * 40)
+    print("Seleccione el formato de exportación:")
+    print("  1. TXT - Reporte en texto plano")
+    print("  2. JSON - Datos estructurados para APIs")
+    print("  3. HTML - Reporte visual básico")
+    print("  4. Dashboard - Reporte interactivo completo")
+    print("  5. Todos - Generar todos los formatos")
+    
+    formatos = {
+        '1': 'txt',
+        '2': 'json', 
+        '3': 'html',
+        '4': 'dashboard',
+        '5': 'all'
+    }
+    
+    while True:
+        try:
+            opcion = input(f"\nOpción [1-5]: ").strip()
+            
+            if opcion in formatos:
+                formato_seleccionado = formatos[opcion]
+                nombre_formato = {
+                    'txt': 'Texto plano',
+                    'json': 'JSON',
+                    'html': 'HTML',
+                    'dashboard': 'Dashboard interactivo',
+                    'all': 'Todos los formatos'
+                }[formato_seleccionado]
+                
+                print(f"{COLORS['green']}✅ Seleccionado: {nombre_formato}{COLORS['end']}")
+                return formato_seleccionado
+            else:
+                print(f"{COLORS['warning']}⚠️  Por favor seleccione una opción válida (1-5){COLORS['end']}")
+                
+        except KeyboardInterrupt:
+            print(f"\n{COLORS['warning']}⚠️  Operación cancelada{COLORS['end']}")
+            exit(0)
+        except Exception:
+            print(f"{COLORS['warning']}⚠️  Por favor ingrese un número válido{COLORS['end']}")
+
+
 def get_repo_input(tipo: str, repos_disponibles: list, repo_previo: str = None) -> str:
     """
     Solicita al usuario que seleccione o ingrese un repositorio.
@@ -176,8 +228,116 @@ def get_repo_input(tipo: str, repos_disponibles: list, repo_previo: str = None) 
             print(f"{COLORS['fail']}❌ Error: {str(e)}{COLORS['end']}")
 
 
+def analyze_team_mode(github_repo: GitHubRepo, repo_empresa: str, candidatos: List[str], 
+                     cache_manager: CacheManager, args) -> None:
+    """
+    Ejecuta análisis en modo equipo para múltiples candidatos.
+    
+    Args:
+        github_repo: Cliente GitHub configurado
+        repo_empresa: Repositorio de la empresa
+        candidatos: Lista de repositorios de candidatos
+        cache_manager: Gestor de caché
+        args: Argumentos de línea de comandos
+    """
+    print(f"\n{COLORS['bold']}🏢 MODO EQUIPO: Analizando {len(candidatos)} candidatos{COLORS['end']}")
+    print(f"{COLORS['cyan']}📊 Empresa: {repo_empresa}{COLORS['end']}")
+    
+    # Analizar empresa una sola vez
+    print(f"\n{COLORS['cyan']}🔍 Analizando repositorio de la empresa...{COLORS['end']}")
+    analisis_empresa = analyze_repository(github_repo, repo_empresa, cache_manager, args.parallel, use_local=args.local)
+    
+    if not analisis_empresa:
+        print(f"{COLORS['fail']}❌ Error analizando repositorio de empresa{COLORS['end']}")
+        return
+    
+    # Resultados del equipo
+    resultados_equipo = {
+        'empresa': analisis_empresa,
+        'candidatos': {},
+        'timestamp': datetime.now().isoformat(),
+        'modo': 'equipo'
+    }
+    
+    # Analizar cada candidato
+    for i, candidato in enumerate(candidatos, 1):
+        print(f"\n{COLORS['cyan']}👤 Analizando candidato {i}/{len(candidatos)}: {candidato}{COLORS['end']}")
+        
+        try:
+            candidato_repo = GitHubRepo.extraer_usuario_repo(candidato)
+            
+            # Verificar que no sea el mismo que la empresa
+            if candidato_repo == repo_empresa:
+                print(f"{COLORS['warning']}⚠️  Saltando: El candidato no puede ser el mismo que la empresa{COLORS['end']}")
+                continue
+            
+            # Analizar candidato
+            analisis_candidato = analyze_repository(github_repo, candidato_repo, cache_manager, args.parallel, use_local=args.local)
+            
+            if analisis_candidato:
+                # Calcular empatía para este candidato
+                resultado_individual = {
+                    'repos': {
+                        'empresa': analisis_empresa,
+                        'candidato': analisis_candidato
+                    },
+                    'timestamp': datetime.now().isoformat()
+                }
+                
+                # Calcular puntuación de empatía
+                algorithm = EmpathyAlgorithm()
+                empathy_result = algorithm.calculate_empathy_score(
+                    resultado_individual['repos']['empresa'],
+                    resultado_individual['repos']['candidato']
+                )
+                
+                # Guardar resultado
+                resultados_equipo['candidatos'][candidato_repo] = {
+                    'analisis': analisis_candidato,
+                    'empathy_score': empathy_result['empathy_score'],
+                    'empathy_analysis': empathy_result
+                }
+                
+                print(f"{COLORS['success']}✅ {candidato_repo}: Puntuación de empatía = {empathy_result['empathy_score']:.1f}%{COLORS['end']}")
+            else:
+                print(f"{COLORS['fail']}❌ Error analizando candidato: {candidato}{COLORS['end']}")
+                
+        except Exception as e:
+            print(f"{COLORS['fail']}❌ Error con candidato {candidato}: {str(e)}{COLORS['end']}")
+    
+    # Generar resumen del equipo
+    if resultados_equipo['candidatos']:
+        print(f"\n{COLORS['bold']}📊 RESUMEN DEL EQUIPO{COLORS['end']}")
+        print("=" * 60)
+        
+        # Ordenar candidatos por puntuación
+        candidatos_ordenados = sorted(
+            resultados_equipo['candidatos'].items(),
+            key=lambda x: x[1]['empathy_score'],
+            reverse=True
+        )
+        
+        print(f"\n{COLORS['cyan']}🏆 Ranking de Candidatos:{COLORS['end']}")
+        for i, (nombre, datos) in enumerate(candidatos_ordenados, 1):
+            score = datos['empathy_score']
+            nivel = datos['empathy_analysis']['interpretation']['level']
+            print(f"  {i}. {nombre}: {score:.1f}% - {nivel}")
+        
+        # Guardar resultados
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        exporter = Exporter()
+        
+        # Generar reporte especial de equipo
+        exporter.exportar_equipo(resultados_equipo, timestamp)
+        
+        print(f"\n{COLORS['success']}✨ Análisis de equipo completado{COLORS['end']}")
+        print(f"Reporte generado: export/equipo_{timestamp}.html")
+    else:
+        print(f"{COLORS['fail']}❌ No se pudo analizar ningún candidato{COLORS['end']}")
+
+
 def analyze_repository(github_repo: GitHubRepo, repo_name: str, cache_manager: CacheManager = None, 
-                      use_parallel: bool = True, force_analysis: bool = False) -> dict:
+                      use_parallel: bool = True, force_analysis: bool = False, use_local: bool = False) -> dict:
     """
     Analiza un repositorio de GitHub y extrae sus métricas.
     
@@ -190,6 +350,7 @@ def analyze_repository(github_repo: GitHubRepo, repo_name: str, cache_manager: C
         cache_manager: Gestor de caché (opcional).
         use_parallel: Si usar procesamiento paralelo.
         force_analysis: Forzar análisis ignorando caché.
+        use_local: Si clonar y analizar localmente.
     
     Returns:
         dict: Métricas del repositorio o None si hay error.
@@ -205,8 +366,15 @@ def analyze_repository(github_repo: GitHubRepo, repo_name: str, cache_manager: C
     print(f"\n{COLORS['cyan']}🔍 Analizando {repo_name}...{COLORS['end']}")
     
     try:
-        # Usar el nuevo método de análisis multi-lenguaje
-        result = github_repo.analizar_repo(repo_name)
+        # Usar análisis local si está habilitado
+        if use_local:
+            from local_analyzer import LocalRepoAnalyzer
+            print(f"{COLORS['cyan']}📥 Usando análisis local (clonando repositorio)...{COLORS['end']}")
+            local_analyzer = LocalRepoAnalyzer()
+            result = local_analyzer.analizar_repo_local(repo_name)
+        else:
+            # Usar el método de análisis remoto via API de GitHub
+            result = github_repo.analizar_repo(repo_name)
         
         # Guardar en caché si está disponible
         if cache_manager and result:
@@ -234,15 +402,18 @@ def main() -> None:
     parser = argparse.ArgumentParser(description='Repo Code Empathizer - Mide la empatía entre código de empresa y candidato')
     parser.add_argument('--empresa', type=str, help='Repositorio de la empresa (formato: usuario/repo)')
     parser.add_argument('--candidato', type=str, help='Repositorio del candidato (formato: usuario/repo)')
+    parser.add_argument('--candidatos', nargs='+', help='Múltiples repositorios de candidatos (modo equipo)')
     parser.add_argument('--config', type=str, default='config.yaml', help='Archivo de configuración')
-    parser.add_argument('--output', type=str, default='all', 
+    parser.add_argument('--output', type=str, default=None, 
                        choices=['txt', 'json', 'html', 'dashboard', 'all'],
-                       help='Formato de salida')
+                       help='Formato de salida (si no se especifica, se preguntará interactivamente)')
     parser.add_argument('--no-cache', action='store_true', help='Desactivar caché')
     parser.add_argument('--clear-cache', action='store_true', help='Limpiar caché antes de ejecutar')
     parser.add_argument('--parallel', action='store_true', default=True, help='Usar procesamiento paralelo')
+    parser.add_argument('--local', action='store_true', help='Clonar y analizar repositorios localmente (recomendado para repos grandes)')
     parser.add_argument('--languages', nargs='+', help='Lenguajes específicos a analizar')
     parser.add_argument('--list-languages', action='store_true', help='Listar lenguajes soportados')
+    parser.add_argument('--team-mode', action='store_true', help='Activar modo equipo para análisis comparativo')
     
     args = parser.parse_args()
     
@@ -278,7 +449,36 @@ def main() -> None:
             with open("REPO.txt", "r") as f:
                 repos_disponibles = [line.strip() for line in f if line.strip()]
         
-        # Obtener repositorios a analizar
+        # Verificar modo equipo
+        if args.team_mode or args.candidatos:
+            # Modo equipo
+            if args.empresa:
+                repo_empresa = GitHubRepo.extraer_usuario_repo(args.empresa)
+            else:
+                repo_empresa = get_repo_input("empresa", repos_disponibles)
+            
+            # Obtener lista de candidatos
+            if args.candidatos:
+                candidatos = args.candidatos
+            else:
+                print(f"\n{COLORS['cyan']}📋 Ingrese los repositorios de los candidatos (uno por línea).{COLORS['end']}")
+                print(f"{COLORS['cyan']}   Presione Enter sin escribir nada para finalizar:{COLORS['end']}")
+                candidatos = []
+                while True:
+                    candidato = input(f"Candidato {len(candidatos) + 1}: ").strip()
+                    if not candidato:
+                        break
+                    candidatos.append(candidato)
+                
+                if not candidatos:
+                    print(f"{COLORS['fail']}❌ Debe ingresar al menos un candidato{COLORS['end']}")
+                    return
+            
+            # Ejecutar análisis en modo equipo
+            analyze_team_mode(github_repo, repo_empresa, candidatos, cache_manager, args)
+            return
+        
+        # Modo normal (un solo candidato)
         if args.empresa:
             repo_empresa = GitHubRepo.extraer_usuario_repo(args.empresa)
         else:
@@ -293,13 +493,19 @@ def main() -> None:
         else:
             repo_candidato = get_repo_input("candidato", repos_disponibles, repo_empresa)
         
+        # Seleccionar formato de salida si no se especificó
+        if args.output is None:
+            output_format = get_output_format()
+        else:
+            output_format = args.output
+        
         # Analizar repositorios
         print(f"\n{COLORS['bold']}🚀 Iniciando análisis de empatía empresa-candidato...{COLORS['end']}")
         
         resultados = {
             'repos': {
-                'empresa': analyze_repository(github_repo, repo_empresa, cache_manager, args.parallel),
-                'candidato': analyze_repository(github_repo, repo_candidato, cache_manager, args.parallel)
+                'empresa': analyze_repository(github_repo, repo_empresa, cache_manager, args.parallel, use_local=args.local),
+                'candidato': analyze_repository(github_repo, repo_candidato, cache_manager, args.parallel, use_local=args.local)
             },
             'timestamp': datetime.now().isoformat()
         }
@@ -329,19 +535,19 @@ def main() -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         exporter = Exporter()
         
-        if args.output in ['txt', 'all']:
+        if output_format in ['txt', 'all']:
             exporter.exportar_txt(resultados, timestamp)
             print(f"{COLORS['green']}✅ Reporte TXT generado{COLORS['end']}")
         
-        if args.output in ['json', 'all']:
+        if output_format in ['json', 'all']:
             exporter.exportar_json(resultados, timestamp)
             print(f"{COLORS['green']}✅ Reporte JSON generado{COLORS['end']}")
         
-        if args.output in ['html', 'all']:
+        if output_format in ['html', 'all']:
             exporter.exportar_html(resultados, timestamp)
             print(f"{COLORS['green']}✅ Reporte HTML generado{COLORS['end']}")
         
-        if args.output in ['dashboard', 'all']:
+        if output_format in ['dashboard', 'all']:
             exporter.exportar_html(resultados, timestamp, dashboard=True)
             print(f"{COLORS['green']}✅ Dashboard interactivo generado{COLORS['end']}")
         

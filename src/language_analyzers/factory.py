@@ -164,9 +164,19 @@ class AnalyzerFactory:
             analyzer = cls.get_analyzer(language.lower())
             if analyzer:
                 metrics = analyzer.analyze_files(lang_files)
+                duplication = analyzer.analyze_duplication(lang_files)
+                dependencies = analyzer.analyze_dependencies(lang_files)
+                patterns = analyzer.analyze_patterns(lang_files)
+                performance = analyzer.analyze_performance(lang_files)
+                comments = analyzer.analyze_comments(lang_files)
                 results['languages'][language] = {
                     'metrics': metrics,
                     'summary': analyzer.get_summary(),
+                    'duplication': duplication,
+                    'dependencies': dependencies,
+                    'patterns': patterns,
+                    'performance': performance,
+                    'comments': comments,
                     'file_count': len(lang_files)
                 }
         

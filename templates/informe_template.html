@@ -362,9 +362,9 @@
                                         Mejores Métricas
                                     </h6>
                                     <ul class="list-group list-group-flush mb-4">
-                                        {% for categoria in repo_data.keys() if categoria != 'metadata' %}
+                                        {% for categoria in repo_data.keys() if categoria != 'metadata' and categoria != 'duplicacion' %}
                                             {% for metrica, valor in repo_data[categoria].items() %}
-                                                {% if valor >= 0.7 %}
+                                                {% if valor is number and valor >= 0.7 %}
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     {{ metrica|replace('_', ' ')|title }}
                                                     <span class="badge bg-dark rounded-pill">{{ valor|round(3) }}</span>

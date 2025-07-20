@@ -1,0 +1,2029 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis de Empatía - Code Empathizer</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js Matrix plugin for heatmap -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2"></script>
+    
+    <style>
+        :root {
+            /* Tonos pastel principales */
+            --bs-primary: #8B9DC3;      /* Azul pastel */
+            --bs-secondary: #DDA0DD;    /* Ciruela pastel */
+            --bs-success: #98D8C8;      /* Verde menta pastel */
+            --bs-danger: #F7B7A3;       /* Coral pastel */
+            --bs-warning: #F6E6B4;      /* Amarillo pastel */
+            --bs-info: #B4D4E6;         /* Azul cielo pastel */
+            --bs-light: #FFF5F5;        /* Rosa muy claro */
+            --bs-dark: #6B5B95;         /* Púrpura oscuro */
+            
+            /* Escala de grises suaves */
+            --bs-gray-100: #FFF5F5;
+            --bs-gray-200: #F5E6E8;
+            --bs-gray-300: #E6D6DE;
+            --bs-gray-400: #D4C5CD;
+            --bs-gray-500: #C3B5BD;
+            --bs-gray-600: #A896A0;
+            --bs-gray-700: #8B7687;
+            --bs-gray-800: #6B5B65;
+            --bs-gray-900: #4A3A42;
+            
+            /* Colores para gráficos */
+            --chart-color-1: #FFB6C1;   /* Rosa claro */
+            --chart-color-2: #98D8C8;   /* Verde menta */
+            --chart-color-3: #B4D4E6;   /* Azul cielo */
+            --chart-color-4: #DDA0DD;   /* Ciruela */
+            --chart-color-5: #F6E6B4;   /* Amarillo pastel */
+            --chart-color-6: #FFDAB9;   /* Melocotón */
+            --chart-color-7: #E6E6FA;   /* Lavanda */
+            --chart-color-8: #F0E68C;   /* Caqui claro */
+            --chart-color-9: #DDB7E6;   /* Lila */
+            --chart-color-10: #B7E6D4;  /* Verde agua */
+            --chart-color-11: #E6B7C8;  /* Rosa medio */
+        }
+        
+        /* Estilos para tooltips informativos */
+        .info-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background-color: var(--bs-info);
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: help;
+            margin-left: 5px;
+            transition: all 0.3s ease;
+        }
+        
+        .info-icon:hover {
+            background-color: var(--bs-primary);
+            transform: scale(1.1);
+        }
+        
+        .tooltip-inner {
+            max-width: 300px;
+            text-align: left;
+            padding: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .metric-explanation {
+            background-color: #E6E6FA;
+            border-left: 4px solid var(--bs-info);
+            padding: 10px 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .score-interpretation {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 13px;
+            color: #666;
+        }
+        
+        .algorithm-accordion {
+            background-color: rgba(255, 249, 249, 0.5);
+        }
+        
+        .algorithm-accordion .accordion-button {
+            background-color: #E6E6FA;
+            color: var(--bs-dark);
+            font-weight: 600;
+        }
+        
+        .algorithm-accordion .accordion-button:not(.collapsed) {
+            background-color: var(--bs-info);
+            color: white;
+        }
+        
+        .formula-box {
+            background-color: white;
+            border: 2px solid var(--bs-info);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+        }
+        
+        .legend-box {
+            background-color: #B2DFDB;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .score-range {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .score-range:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        
+        .score-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        body {
+            background-color: #FFF9F9;
+            color: #4A3A42;
+        }
+        
+        .btn-primary {
+            background-color: #8B9DC3;
+            border-color: #8B9DC3;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #7A8CB2;
+            border-color: #7A8CB2;
+        }
+        
+        .bg-primary {
+            background-color: #8B9DC3 !important;
+        }
+        
+        .text-primary {
+            color: #8B9DC3 !important;
+        }
+        
+        .border-primary {
+            border-color: #8B9DC3 !important;
+        }
+        
+        .card {
+            border: 1px solid #E6D6DE;
+            box-shadow: 0 2px 4px rgba(139, 157, 195, 0.1);
+            transition: all 0.3s ease;
+            background-color: #FFFFFF;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 8px rgba(139, 157, 195, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: bold;
+            margin: 0 auto;
+            position: relative;
+            background: linear-gradient(135deg, #FFF5F5 0%, #F5E6E8 100%);
+            border: 10px solid #8B9DC3;
+            color: #4A3A42;
+        }
+        
+        .score-excellent { border-color: #98D8C8; background: linear-gradient(135deg, #E8F8F5 0%, #D1F2EB 100%); }
+        .score-good { border-color: #8B9DC3; background: linear-gradient(135deg, #E8EDF5 0%, #D1DCF2 100%); }
+        .score-acceptable { border-color: #F6E6B4; background: linear-gradient(135deg, #FFF9E6 0%, #FFF3CC 100%); }
+        .score-low { border-color: #F7B7A3; background: linear-gradient(135deg, #FFE8E3 0%, #FFD4CC 100%); }
+        .score-very-low { border-color: #DDA0DD; background: linear-gradient(135deg, #F5E6F5 0%, #EBCCEB 100%); }
+        
+        .metric-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            background-color: #F5E6E8;
+            color: #6B5B95;
+            margin: 0.25rem;
+        }
+        
+        /* Override Bootstrap defaults para colores pastel */
+        .text-muted {
+            color: #A896A0 !important;
+        }
+        
+        .bg-light {
+            background-color: #FFF5F5 !important;
+        }
+        
+        .text-dark {
+            color: #6B5B95 !important;
+        }
+        
+        .bg-secondary {
+            background-color: #DDA0DD !important;
+        }
+        
+        .bg-success {
+            background-color: #98D8C8 !important;
+        }
+        
+        .bg-warning {
+            background-color: #F6E6B4 !important;
+            color: #5C4D1F !important;
+        }
+        
+        .bg-danger {
+            background-color: #F7B7A3 !important;
+        }
+        
+        .bg-info {
+            background-color: #B4D4E6 !important;
+        }
+        
+        .metric-high { 
+            background-color: #98D8C8 !important;
+            color: #2C5545 !important;
+        }
+        .metric-medium { 
+            background-color: #F6E6B4 !important;
+            color: #5C4D1F !important;
+        }
+        .metric-low { 
+            background-color: #F7B7A3 !important;
+            color: #5C2E23 !important;
+        }
+        
+        .header-gradient {
+            background: linear-gradient(135deg, #8B9DC3 0%, #B4D4E6 100%);
+            color: white;
+            padding: 3rem 0;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .recommendation-card {
+            border-left: 4px solid #666666;
+            background-color: #fafafa;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .priority-high {
+            border-left-color: #333333;
+        }
+        
+        .priority-medium {
+            border-left-color: #666666;
+        }
+        
+        .priority-low {
+            border-left-color: #999999;
+        }
+        
+        .language-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            margin: 0.25rem;
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        
+        .language-match {
+            background-color: #d0d0d0;
+            color: #6B5B95;
+        }
+        
+        .language-missing {
+            background-color: #f0f0f0;
+            color: #666666;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #6B5B95;
+        }
+        
+        .stat-label {
+            color: #666666;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .progress {
+            height: 25px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background-color: #A896A0;
+        }
+        
+        .section-title {
+            border-bottom: 2px solid #E6D6DE;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            color: #6B5B95;
+        }
+        
+        .footer {
+            background-color: #FFF5F5;
+            border-top: 1px solid #E6D6DE;
+            padding: 2rem 0;
+            margin-top: 4rem;
+        }
+        
+        /* Progress bars con colores pastel */
+        .progress {
+            background-color: #F5E6E8 !important;
+        }
+        
+        .progress-bar {
+            background-color: #8B9DC3 !important;
+        }
+        
+        /* Cards headers específicos */
+        .card-header {
+            border-bottom: 1px solid #E6D6DE;
+        }
+        
+        .card-header.bg-primary {
+            background-color: #8B9DC3 !important;
+            color: white !important;
+        }
+        
+        .card-header.bg-info {
+            background-color: #B4D4E6 !important;
+            color: #4A5568 !important;
+        }
+        
+        /* Badges adicionales */
+        .badge {
+            font-weight: 500;
+        }
+        
+        .badge.bg-light {
+            background-color: #FFF5F5 !important;
+            color: #6B5B95 !important;
+        }
+        
+        /* Links */
+        a {
+            color: #8B9DC3;
+        }
+        
+        a:hover {
+            color: #6B7DA3;
+        }
+        
+        /* Tables */
+        .table {
+            color: #6B5B95;
+        }
+        
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: #FFF9F9;
+        }
+        
+        /* Alerts */
+        .alert-light {
+            background-color: #FFF5F5;
+            border-color: #E6D6DE;
+            color: #6B5B95;
+        }
+        
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header-gradient">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 fw-bold mb-3">
+                        <i class="bi bi-code-square me-3"></i>Code Empathizer
+                    </h1>
+                    <p class="lead mb-0">Análisis de Empatía entre Código Empresa-Candidato</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <p class="mb-1"><i class="bi bi-calendar3 me-2"></i>{{ timestamp | format_date }}</p>
+                    <p class="mb-0"><i class="bi bi-clock me-2"></i>v2.0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mt-4">
+        <!-- Score Principal -->
+        {% if metricas.empathy_analysis %}
+        <div class="card mb-4 fade-in">
+            <div class="card-body text-center py-5">
+                <h2 class="card-title mb-4">
+                    Puntuación de Empatía
+                    <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                          title="La empatía del código mide qué tan bien se alinea el estilo de programación del candidato con los estándares de la empresa. Una puntuación alta indica que el candidato escribe código de manera similar a su equipo actual.">
+                        i
+                    </span>
+                </h2>
+                <div class="score-circle {% if metricas.empathy_analysis.empathy_score >= 90 %}score-excellent{% elif metricas.empathy_analysis.empathy_score >= 75 %}score-good{% elif metricas.empathy_analysis.empathy_score >= 60 %}score-acceptable{% elif metricas.empathy_analysis.empathy_score >= 45 %}score-low{% else %}score-very-low{% endif %}">
+                    {{ "%.1f"|format(metricas.empathy_analysis.empathy_score) }}%
+                </div>
+                <h3 class="mt-4 mb-3">{{ metricas.empathy_analysis.interpretation.level }}</h3>
+                <p class="lead text-muted mb-4">{{ metricas.empathy_analysis.interpretation.description }}</p>
+                
+                <!-- Interpretación de rangos de puntuación -->
+                <div class="metric-explanation">
+                    <h6 class="mb-2">¿Qué significa esta puntuación?</h6>
+                    <div class="legend-box">
+                        <div class="score-range">
+                            <span class="score-badge" style="background-color: #4CAF50; color: white;">90-100%</span>
+                            <span class="ms-2">Excelente alineación - Integración inmediata al equipo</span>
+                        </div>
+                        <div class="score-range">
+                            <span class="score-badge" style="background-color: #8BC34A; color: white;">75-89%</span>
+                            <span class="ms-2">Buena alineación - Requiere mínima adaptación</span>
+                        </div>
+                        <div class="score-range">
+                            <span class="score-badge" style="background-color: #FFC107; color: dark;">60-74%</span>
+                            <span class="ms-2">Alineación moderada - Requiere capacitación</span>
+                        </div>
+                        <div class="score-range">
+                            <span class="score-badge" style="background-color: #FF9800; color: white;">45-59%</span>
+                            <span class="ms-2">Baja alineación - Requiere capacitación significativa</span>
+                        </div>
+                        <div class="score-range">
+                            <span class="score-badge" style="background-color: #F44336; color: white;">0-44%</span>
+                            <span class="ms-2">Muy baja alineación - Requiere capacitación extensiva</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-light border mt-4" role="alert">
+                    <i class="bi bi-lightbulb me-2"></i>
+                    <strong>Recomendación:</strong> {{ metricas.empathy_analysis.interpretation.recommendation }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Información de Repositorios -->
+        <div class="row mb-4">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.metadata %}
+            <div class="col-md-6 mb-3">
+                <div class="card h-100 fade-in">
+                    <div class="card-header {% if repo_tipo == 'empresa' %}bg-dark text-white{% else %}bg-secondary text-white{% endif %}">
+                        <h5 class="mb-0">
+                            <i class="bi {% if repo_tipo == 'empresa' %}bi-building{% else %}bi-person{% endif %} me-2"></i>
+                            {% if repo_tipo == 'empresa' %}EMPRESA{% else %}CANDIDATO{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="card-title">{{ repo_data.metadata.nombre }}</h6>
+                        <div class="mb-3">
+                            <small class="text-muted">
+                                <i class="bi bi-link-45deg me-1"></i>
+                                <a href="{{ repo_data.metadata.url }}" target="_blank" class="text-decoration-none text-secondary">
+                                    {{ repo_data.metadata.url }}
+                                </a>
+                            </small>
+                        </div>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ repo_data.metadata.archivos_analizados }}</div>
+                                    <div class="stat-label">Archivos</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ "%.1f"|format(repo_data.metadata.tamano_kb) }}</div>
+                                    <div class="stat-label">KB Total</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <small class="text-muted">Lenguaje principal:</small>
+                            <div>
+                                <span class="language-badge">{{ repo_data.metadata.lenguaje_principal }}</span>
+                            </div>
+                            {% if repo_data.metadata.lenguajes_analizados %}
+                            <small class="text-muted mt-2 d-block">Lenguajes analizados:</small>
+                            <div>
+                                {% for lang in repo_data.metadata.lenguajes_analizados %}
+                                <span class="language-badge">{{ lang }}</span>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Métricas por Categoría -->
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.category_scores %}
+        <div class="card mb-4 fade-in">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-graph-up me-2"></i>Análisis por Categoría
+                    <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                          title="Cada categoría evalúa un aspecto específico del código. Las puntuaciones se calculan comparando las prácticas del candidato con las de la empresa.">
+                        i
+                    </span>
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4">
+                    {% set category_explanations = {
+                        'nombres': 'Evalúa la claridad y descriptividad de variables, funciones y clases. Un código con buenos nombres es más fácil de entender y mantener.',
+                        'documentacion': 'Mide la cantidad y calidad de comentarios, docstrings y documentación del código. Esencial para la colaboración en equipo.',
+                        'modularidad': 'Analiza la organización del código en funciones, clases y módulos. Un código modular es más reutilizable y fácil de probar.',
+                        'complejidad': 'Evalúa qué tan complejo es el código usando métricas como la complejidad ciclomática. Menor complejidad = código más mantenible.',
+                        'manejo_errores': 'Verifica el uso adecuado de try-catch, validaciones y manejo de casos extremos. Crítico para la estabilidad del software.',
+                        'pruebas': 'Detecta la presencia de tests unitarios, de integración y cobertura. Los tests garantizan que el código funcione correctamente.',
+                        'seguridad': 'Analiza prácticas de seguridad como validación de entradas, uso de funciones seguras y prevención de vulnerabilidades.',
+                        'consistencia_estilo': 'Mide la uniformidad en el formato del código: indentación, espaciado, convenciones de nombres, etc.',
+                        'patrones': 'Detecta el uso de patrones de diseño reconocidos y anti-patrones. Los buenos patrones mejoran la arquitectura del código.',
+                        'rendimiento': 'Identifica problemas potenciales de rendimiento como loops anidados excesivos o operaciones costosas.',
+                        'comentarios': 'Analiza la proporción y calidad de comentarios, incluyendo TODOs y FIXMEs. Ayuda a entender las intenciones del código.'
+                    } %}
+                    {% for categoria, score in metricas.empathy_analysis.category_scores.items() %}
+                    <div class="col-md-3 col-sm-6">
+                        <div class="metric-badge {% if score >= 80 %}metric-high{% elif score >= 60 %}metric-medium{% else %}metric-low{% endif %} w-100 text-center p-3">
+                            <h6 class="mb-2">
+                                {{ categoria.replace('_', ' ').title() }}
+                                <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                      title="{{ category_explanations.get(categoria, 'Métrica de calidad del código') }}">
+                                    i
+                                </span>
+                            </h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar" style="width: {{ score }}%;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="fw-bold">{{ "%.1f"|format(score) }}%</span>
+                            {% if score >= 80 %}
+                            <small class="d-block mt-1 text-success">Excelente</small>
+                            {% elif score >= 60 %}
+                            <small class="d-block mt-1 text-warning">Bueno</small>
+                            {% else %}
+                            <small class="d-block mt-1 text-danger">Necesita mejora</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Explicación del Algoritmo -->
+        <div class="accordion algorithm-accordion mb-4" id="algorithmAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="algorithmHeading">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" 
+                            data-bs-target="#algorithmCollapse" aria-expanded="false" aria-controls="algorithmCollapse">
+                        <i class="bi bi-calculator me-2"></i>
+                        ¿Cómo se calcula la puntuación de empatía?
+                        <span class="info-icon ms-2" data-bs-toggle="tooltip" data-bs-placement="top" 
+                              title="Haz clic para ver la fórmula matemática completa y entender cómo se obtiene la puntuación final">
+                            i
+                        </span>
+                    </button>
+                </h2>
+                <div id="algorithmCollapse" class="accordion-collapse collapse" aria-labelledby="algorithmHeading" 
+                     data-bs-parent="#algorithmAccordion">
+                    <div class="accordion-body">
+                        <h5 class="mb-3">Algoritmo de Empatía v3.0</h5>
+                        
+                        <div class="formula-box">
+                            <h6 class="mb-3">Fórmula Matemática:</h6>
+                            <code>
+                                E = (Σ(Si × Wi × correlaciones)) × L × ΠFk
+                            </code>
+                            <div class="mt-3">
+                                <small>
+                                    <strong>Donde:</strong><br>
+                                    • E = Puntuación de empatía final (0-100)<br>
+                                    • Si = Puntuación de la categoría i (0-100)<br>
+                                    • Wi = Peso de la categoría i<br>
+                                    • L = Factor de coincidencia de lenguajes<br>
+                                    • Fk = Factores de ajuste (6 en total)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Pesos de las Categorías:</h6>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th>Peso</th>
+                                    <th>Importancia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Nombres descriptivos</td>
+                                    <td>12%</td>
+                                    <td><span class="badge bg-danger">Alta</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Documentación</td>
+                                    <td>12%</td>
+                                    <td><span class="badge bg-danger">Alta</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Modularidad</td>
+                                    <td>10%</td>
+                                    <td><span class="badge bg-danger">Alta</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Complejidad</td>
+                                    <td>10%</td>
+                                    <td><span class="badge bg-danger">Alta</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Manejo de errores</td>
+                                    <td>8%</td>
+                                    <td><span class="badge bg-warning">Media</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Pruebas</td>
+                                    <td>8%</td>
+                                    <td><span class="badge bg-warning">Media</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Seguridad</td>
+                                    <td>6%</td>
+                                    <td><span class="badge bg-warning">Media</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Consistencia de estilo</td>
+                                    <td>4%</td>
+                                    <td><span class="badge bg-info">Baja</span></td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Patrones de diseño</strong></td>
+                                    <td><strong>12%</strong></td>
+                                    <td><span class="badge bg-dark">Crítica</span></td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Rendimiento</strong></td>
+                                    <td><strong>10%</strong></td>
+                                    <td><span class="badge bg-dark">Crítica</span></td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td><strong>Comentarios/TODOs</strong></td>
+                                    <td><strong>8%</strong></td>
+                                    <td><span class="badge bg-warning">Media</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        
+                        <h6 class="mt-4 mb-3">Factores de Ajuste:</h6>
+                        <div class="legend-box">
+                            <ol class="mb-0">
+                                <li><strong>Factor de Complejidad (F1):</strong> Ajusta según la diferencia de complejidad entre proyectos</li>
+                                <li><strong>Factor de Consistencia (F2):</strong> Premia la consistencia entre categorías</li>
+                                <li><strong>Factor de Excelencia (F3):</strong> Bonifica categorías con puntuaciones excepcionales</li>
+                                <li><strong>Factor de Anti-patrones (F4):</strong> Penaliza la presencia de malas prácticas</li>
+                                <li><strong>Factor de Patrones (F5):</strong> Bonifica el uso de buenos patrones de diseño</li>
+                                <li><strong>Factor de Balance (F6):</strong> Ajusta según el equilibrio entre categorías</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3" role="alert">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>Nota:</strong> El algoritmo no solo suma puntuaciones, sino que considera correlaciones entre categorías, 
+                            coincidencia de tecnologías y múltiples factores de ajuste para proporcionar una evaluación integral y justa.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Análisis de Lenguajes -->
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.language_overlap %}
+        <div class="card mb-4 fade-in">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="bi bi-translate me-2"></i>Análisis de Lenguajes
+                    <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                          title="Compara los lenguajes de programación usados por la empresa con los del candidato. Una alta coincidencia significa que el candidato ya domina las tecnologías de la empresa.">
+                        i
+                    </span>
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <div class="stat-card">
+                            <div class="stat-value">{{ metricas.empathy_analysis.language_overlap.score }}%</div>
+                            <div class="stat-label">Coincidencia</div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        {% if metricas.empathy_analysis.language_overlap.overlap %}
+                        <h6>Lenguajes en común:</h6>
+                        <div class="mb-3">
+                            {% for lang in metricas.empathy_analysis.language_overlap.overlap %}
+                            <span class="language-badge language-match">
+                                <i class="bi bi-check-circle me-1"></i>{{ lang }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        
+                        {% if metricas.empathy_analysis.language_overlap.missing %}
+                        <h6>Lenguajes faltantes en el candidato:</h6>
+                        <div>
+                            {% for lang in metricas.empathy_analysis.language_overlap.missing %}
+                            <span class="language-badge language-missing">
+                                <i class="bi bi-x-circle me-1"></i>{{ lang }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Análisis de Duplicación -->
+        <div class="row">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.duplicacion %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header {% if repo_tipo == 'empresa' %}bg-dark text-white{% else %}bg-secondary text-white{% endif %}">
+                        <h5 class="mb-0">
+                            <i class="bi bi-copy me-2"></i>
+                            Duplicación - {% if repo_tipo == 'empresa' %}EMPRESA{% else %}CANDIDATO{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ repo_data.duplicacion.porcentaje_global }}%</div>
+                                    <div class="stat-label">Duplicación</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card">
+                                    <div class="stat-value">{{ repo_data.duplicacion.bloques_encontrados }}</div>
+                                    <div class="stat-label">Bloques</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if repo_data.duplicacion.archivos_mas_duplicados %}
+                        <h6 class="mt-3">Archivos con más duplicación:</h6>
+                        <ul class="list-unstyled">
+                            {% for archivo in repo_data.duplicacion.archivos_mas_duplicados[:3] %}
+                            <li class="mb-1">
+                                <small class="text-muted">
+                                    <i class="bi bi-file-code me-1"></i>
+                                    {{ archivo.archivo.split('/')[-1] }} ({{ archivo.porcentaje }}%)
+                                </small>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Análisis de Dependencias -->
+        <div class="row">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.dependencias %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header {% if repo_tipo == 'empresa' %}bg-dark text-white{% else %}bg-secondary text-white{% endif %}">
+                        <h5 class="mb-0">
+                            <i class="bi bi-diagram-3 me-2"></i>
+                            Dependencias - {% if repo_tipo == 'empresa' %}EMPRESA{% else %}CANDIDATO{% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3 mb-3">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 class="mb-0">{{ repo_data.dependencias.total_dependencies }}</h3>
+                                    <small class="text-muted">Total</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 class="mb-0">{{ repo_data.dependencias.external_dependencies }}</h3>
+                                    <small class="text-muted">Externas</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 class="mb-0">{{ repo_data.dependencias.internal_dependencies }}</h3>
+                                    <small class="text-muted">Internas</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if repo_data.dependencias.circular_dependencies > 0 %}
+                        <div class="alert alert-warning mb-3" role="alert">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            {{ repo_data.dependencias.circular_dependencies }} dependencias circulares detectadas
+                        </div>
+                        {% endif %}
+                        
+                        <div class="progress mb-2">
+                            <div class="progress-bar bg-secondary" role="progressbar" 
+                                 style="width: {{ repo_data.dependencias.coupling_score * 100 }}%;">
+                            </div>
+                        </div>
+                        <small class="text-muted">Acoplamiento: {{ "%.1f"|format(repo_data.dependencias.coupling_score * 100) }}%</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Análisis Avanzado (Patrones, Rendimiento, Comentarios) -->
+        <h3 class="section-title mt-5">
+            <i class="bi bi-gear me-2"></i>Análisis Avanzado
+            <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                  title="Métricas avanzadas que evalúan aspectos técnicos específicos del código como patrones de diseño, rendimiento y calidad de la documentación.">
+                i
+            </span>
+        </h3>
+        
+        <div class="row">
+            <!-- Patrones -->
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.patrones %}
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header {% if repo_tipo == 'empresa' %}bg-primary text-white{% else %}bg-info text-dark{% endif %}">
+                        <h6 class="mb-0">
+                            <i class="bi bi-puzzle me-2"></i>
+                            Patrones - {% if repo_tipo == 'empresa' %}EMPRESA{% else %}CANDIDATO{% endif %}
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                  title="Detecta patrones de diseño (Singleton, Factory, Observer) y anti-patrones (god class, código espagueti). Los buenos patrones indican código bien estructurado.">
+                                i
+                            </span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <h2 class="mb-0">{{ "%.1f"|format(repo_data.patrones.pattern_score|default(0)) }}</h2>
+                            <small class="text-muted">Score de Patrones</small>
+                        </div>
+                        
+                        {% if repo_data.patrones.design_patterns %}
+                        <h6 class="small">Patrones detectados:</h6>
+                        <div class="mb-3">
+                            {% for pattern, locations in repo_data.patrones.design_patterns.items() %}
+                            <span class="badge bg-success text-white me-1 mb-1">
+                                {{ pattern }} ({{ locations|length }})
+                            </span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-muted small mb-3">No se detectaron patrones de diseño específicos</p>
+                        {% endif %}
+                        
+                        {% if repo_data.patrones.anti_patterns %}
+                        <h6 class="small text-danger">Anti-patrones:</h6>
+                        <ul class="list-unstyled small">
+                            {% for pattern, instances in repo_data.patrones.anti_patterns.items() %}
+                            <li><span class="badge bg-warning text-dark">{{ pattern.replace('_', ' ').title() }}</span> {{ instances|length }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-success small">✓ No se detectaron anti-patrones</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            
+            <!-- Rendimiento -->
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.rendimiento %}
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header {% if repo_tipo == 'empresa' %}bg-primary text-white{% else %}bg-info text-dark{% endif %}">
+                        <h6 class="mb-0">
+                            <i class="bi bi-speedometer2 me-2"></i>
+                            Rendimiento - {% if repo_tipo == 'empresa' %}EMPRESA{% else %}CANDIDATO{% endif %}
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                  title="Identifica problemas potenciales de rendimiento como loops anidados excesivos, operaciones costosas o consultas en bucles. Un buen score indica código eficiente.">
+                                i
+                            </span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <h2 class="mb-0">{{ "%.1f"|format(repo_data.rendimiento.performance_score) }}</h2>
+                            <small class="text-muted">Score de Rendimiento</small>
+                        </div>
+                        
+                        {% if repo_data.rendimiento.performance_issues %}
+                        <h6 class="small">Problemas detectados:</h6>
+                        <ul class="list-unstyled small">
+                            {% for issue_type, issues in repo_data.rendimiento.performance_issues.items() %}
+                            {% if issues %}
+                            <li class="mb-1">
+                                <i class="bi bi-exclamation-circle text-warning me-1"></i>
+                                {{ issue_type.replace('_', ' ').title() }}: {{ issues|length }}
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+            
+            <!-- Comentarios -->
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.comentarios %}
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header {% if repo_tipo == 'empresa' %}bg-primary text-white{% else %}bg-info text-dark{% endif %}">
+                        <h6 class="mb-0">
+                            <i class="bi bi-chat-dots me-2"></i>
+                            Comentarios - {% if repo_tipo == 'empresa' %}EMPRESA{% else %}CANDIDATO{% endif %}
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                  title="Evalúa la proporción de comentarios vs código y detecta marcadores como TODO, FIXME, BUG. Una buena documentación facilita el mantenimiento del código.">
+                                i
+                            </span>
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4 class="mb-0">{{ "%.1f"|format(repo_data.comentarios.comment_metrics.comment_ratio) }}%</h4>
+                                    <small class="text-muted">
+                                        Ratio
+                                        <span class="info-icon" style="width: 14px; height: 14px; font-size: 9px;" 
+                                              data-bs-toggle="tooltip" title="Porcentaje de líneas con comentarios respecto al total de líneas de código">
+                                            i
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h4 class="mb-0">{{ "%.1f"|format(repo_data.comentarios.comment_metrics.documentation_coverage) }}%</h4>
+                                    <small class="text-muted">
+                                        Cobertura
+                                        <span class="info-icon" style="width: 14px; height: 14px; font-size: 9px;" 
+                                              data-bs-toggle="tooltip" title="Porcentaje de funciones/métodos que tienen documentación">
+                                            i
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if repo_data.comentarios.markers %}
+                        <h6 class="small">Marcadores:</h6>
+                        <div>
+                            {% for marker_type, markers in repo_data.comentarios.markers.items() %}
+                            {% if markers %}
+                            <span class="badge {% if marker_type in ['bug', 'fixme'] %}bg-danger{% elif marker_type in ['todo', 'hack'] %}bg-warning text-dark{% else %}bg-secondary{% endif %} me-1 mb-1">
+                                {{ marker_type.upper() }} ({{ markers|length }})
+                            </span>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        <!-- Recomendaciones -->
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.recommendations %}
+        <div class="card mb-4 fade-in">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="bi bi-lightbulb me-2"></i>Recomendaciones para el Candidato</h4>
+            </div>
+            <div class="card-body">
+                {% for rec in metricas.empathy_analysis.recommendations %}
+                <div class="recommendation-card priority-{{ rec.priority|lower }}">
+                    <div class="d-flex align-items-start">
+                        <span class="badge bg-secondary me-3">{{ rec.priority|upper }}</span>
+                        <div class="flex-grow-1">
+                            <h5 class="mb-2">{{ rec.title }}</h5>
+                            <p class="mb-2">{{ rec.description }}</p>
+                            {% if rec.impact %}
+                            <div class="alert alert-light border-0 py-2 px-3 mb-2">
+                                <small><strong>Impacto:</strong> {{ rec.impact }}</small>
+                            </div>
+                            {% endif %}
+                            {% if rec.tips %}
+                            <ul class="mb-0">
+                                {% for tip in rec.tips %}
+                                <li>{{ tip }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Gráficos Avanzados -->
+        <div class="row mb-4">
+            <!-- Gráfico de Comparación Detallada -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Comparación por Categorías</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gráfico de Distribución de Calidad -->
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Distribución de Calidad</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 400px;">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico Radar de Competencias -->
+        <div class="row mb-4">
+            <div class="col-lg-12">
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="bi bi-radar me-2"></i>Análisis Radar de Competencias
+                            <span class="info-icon" data-bs-toggle="tooltip" data-bs-placement="right" 
+                                  title="Vista comparativa de todas las competencias en un gráfico radar. Permite identificar rápidamente fortalezas y áreas de mejora.">
+                                i
+                            </span>
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="chart-container" style="height: 450px; position: relative;">
+                                    <canvas id="radarComparisonChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-lg-4">
+                                <div class="metric-explanation">
+                                    <h6 class="mb-3">Interpretación del Radar</h6>
+                                    <p class="small mb-2">El gráfico radar muestra todas las competencias evaluadas en una vista unificada:</p>
+                                    <ul class="small">
+                                        <li><strong>Área más grande = Mejor desempeño</strong></li>
+                                        <li><strong>Forma simétrica = Competencias balanceadas</strong></li>
+                                        <li><strong>Picos = Fortalezas destacadas</strong></li>
+                                        <li><strong>Valles = Áreas de mejora</strong></li>
+                                    </ul>
+                                    <div class="legend-box mt-3">
+                                        <p class="small mb-1"><strong>Líneas del gráfico:</strong></p>
+                                        <p class="small mb-1"><span style="color: #8B9DC3;">▬</span> Empresa (referencia)</p>
+                                        <p class="small mb-0"><span style="color: #DDA0DD;">▬</span> Candidato (evaluado)</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráficos de Análisis Avanzado -->
+        <div class="row mb-4">
+            <!-- Mapa de Calor de Métricas -->
+            <div class="col-lg-8 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-grid-3x3 me-2"></i>Mapa de Calor - Análisis Completo</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 500px;">
+                            <canvas id="heatmapChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Evolución de Métricas -->
+            <div class="col-lg-4 mb-4">
+                <div class="card h-100 fade-in">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="bi bi-graph-up me-2"></i>Análisis Ponderado</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height: 500px;">
+                            <canvas id="weightedChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gráfico de Patrones y Anti-patrones -->
+        <div class="card mb-4 fade-in">
+            <div class="card-header bg-light">
+                <h4 class="mb-0"><i class="bi bi-diagram-3 me-2"></i>Análisis de Patrones de Diseño</h4>
+            </div>
+            <div class="card-body">
+                {% if (metricas.repos.empresa and metricas.repos.empresa.patrones) or (metricas.repos.candidato and metricas.repos.candidato.patrones) %}
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="patternsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="antiPatternsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="bi bi-puzzle display-1 text-muted"></i>
+                    <h5 class="mt-3 text-muted">No se detectaron patrones de diseño específicos</h5>
+                    <p class="text-muted">El análisis de patrones busca estructuras comunes como Singleton, Factory, Observer, etc.</p>
+                    <p class="text-muted">Los proyectos analizados pueden usar patrones más simples o específicos del dominio.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="mb-0 text-muted">
+                <i class="bi bi-code-slash me-2"></i>
+                Generado por <strong>Code Empathizer v2.0</strong> - R. Benítez | 
+                <a href="https://github.com/686f6c61/Repo-Code-Empathizer" class="text-decoration-none text-secondary">
+                    <i class="bi bi-github me-1"></i>GitHub
+                </a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Charts -->
+    <script>
+        // Configuración global de Chart.js para colores pastel
+        Chart.defaults.color = '#6B5B95';
+        Chart.defaults.borderColor = '#E6D6DE';
+        
+        // Gráfico de categorías (Radar)
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.category_scores %}
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryData = {
+            labels: [{% for cat in metricas.empathy_analysis.category_scores.keys() %}'{{ cat.replace("_", " ").title() }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Puntuación de Empatía',
+                data: [{% for score in metricas.empathy_analysis.category_scores.values() %}{{ score }}{% if not loop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(139, 157, 195, 0.2)',
+                borderColor: 'rgba(139, 157, 195, 1)',
+                borderWidth: 2,
+                pointBackgroundColor: 'rgba(139, 157, 195, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(139, 157, 195, 1)'
+            }]
+        };
+        
+        new Chart(categoryCtx, {
+            type: 'radar',
+            data: categoryData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: '#E6D6DE'
+                        },
+                        pointLabels: {
+                            color: '#333333',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.r.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+        
+        // Gráfico de comparación mejorado (Barras agrupadas)
+        const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+        const allCategorias = ['nombres', 'documentacion', 'modularidad', 'complejidad', 'manejo_errores', 'pruebas', 'seguridad', 'consistencia_estilo', 'patrones', 'rendimiento', 'comentarios'];
+        
+        const empresaData = [];
+        const candidatoData = [];
+        const labels = [];
+        
+        {% for categoria in ['nombres', 'documentacion', 'modularidad', 'complejidad', 'manejo_errores', 'pruebas', 'seguridad', 'consistencia_estilo'] %}
+            {% if metricas.repos.empresa and metricas.repos.empresa[categoria] %}
+                empresaData.push({{ (metricas.repos.empresa[categoria].values()|sum / metricas.repos.empresa[categoria]|length * 100) if metricas.repos.empresa[categoria]|length > 0 else 0 }});
+            {% else %}
+                empresaData.push(0);
+            {% endif %}
+            
+            {% if metricas.repos.candidato and metricas.repos.candidato[categoria] %}
+                candidatoData.push({{ (metricas.repos.candidato[categoria].values()|sum / metricas.repos.candidato[categoria]|length * 100) if metricas.repos.candidato[categoria]|length > 0 else 0 }});
+            {% else %}
+                candidatoData.push(0);
+            {% endif %}
+            
+            labels.push('{{ categoria.replace("_", " ").title() }}');
+        {% endfor %}
+        
+        // Agregar métricas avanzadas
+        {% if metricas.repos.empresa and metricas.repos.empresa.patrones %}
+            empresaData.push({{ metricas.repos.empresa.patrones.pattern_score|default(0) }});
+        {% else %}
+            empresaData.push(0);
+        {% endif %}
+        {% if metricas.repos.candidato and metricas.repos.candidato.patrones %}
+            candidatoData.push({{ metricas.repos.candidato.patrones.pattern_score|default(0) }});
+        {% else %}
+            candidatoData.push(0);
+        {% endif %}
+        labels.push('Patrones');
+        
+        {% if metricas.repos.empresa and metricas.repos.empresa.rendimiento %}
+            empresaData.push({{ metricas.repos.empresa.rendimiento.performance_score|default(0) }});
+        {% else %}
+            empresaData.push(0);
+        {% endif %}
+        {% if metricas.repos.candidato and metricas.repos.candidato.rendimiento %}
+            candidatoData.push({{ metricas.repos.candidato.rendimiento.performance_score|default(0) }});
+        {% else %}
+            candidatoData.push(0);
+        {% endif %}
+        labels.push('Rendimiento');
+        
+        {% if metricas.repos.empresa and metricas.repos.empresa.comentarios %}
+            empresaData.push({{ metricas.repos.empresa.comentarios.comment_metrics.comment_quality_score|default(0) }});
+        {% else %}
+            empresaData.push(0);
+        {% endif %}
+        {% if metricas.repos.candidato and metricas.repos.candidato.comentarios %}
+            candidatoData.push({{ metricas.repos.candidato.comentarios.comment_metrics.comment_quality_score|default(0) }});
+        {% else %}
+            candidatoData.push(0);
+        {% endif %}
+        labels.push('Comentarios');
+        
+        new Chart(comparisonCtx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Empresa',
+                    data: empresaData,
+                    backgroundColor: 'rgba(139, 157, 195, 0.8)',
+                    borderColor: 'rgba(139, 157, 195, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Candidato',
+                    data: candidatoData,
+                    backgroundColor: 'rgba(180, 212, 230, 0.6)',
+                    borderColor: 'rgba(180, 212, 230, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: '#E6D6DE'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de Distribución de Calidad
+        const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+        const categoryScores = [];
+        const categoryNames = [];
+        const categoryColors = [];
+        
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.category_scores %}
+            {% for cat, score in metricas.empathy_analysis.category_scores.items() %}
+                categoryNames.push('{{ cat.replace("_", " ").title() }}');
+                categoryScores.push({{ score }});
+                {% if score >= 80 %}
+                    categoryColors.push('rgba(152, 216, 200, 0.8)'); // Verde menta pastel
+                {% elif score >= 60 %}
+                    categoryColors.push('rgba(246, 230, 180, 0.8)'); // Amarillo pastel
+                {% elif score >= 40 %}
+                    categoryColors.push('rgba(255, 218, 185, 0.8)'); // Melocotón pastel
+                {% else %}
+                    categoryColors.push('rgba(247, 183, 163, 0.8)'); // Coral pastel
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        new Chart(qualityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: categoryNames,
+                datasets: [{
+                    data: categoryScores,
+                    backgroundColor: categoryColors,
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 11
+                            },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                return data.labels.map((label, i) => ({
+                                    text: label + ': ' + data.datasets[0].data[i].toFixed(1) + '%',
+                                    fillStyle: data.datasets[0].backgroundColor[i],
+                                    strokeStyle: data.datasets[0].borderColor,
+                                    lineWidth: data.datasets[0].borderWidth,
+                                    hidden: false,
+                                    index: i
+                                }));
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico Radar Comparativo
+        const radarComparisonCtx = document.getElementById('radarComparisonChart').getContext('2d');
+        
+        // Preparar datos para el radar comparativo
+        const radarLabels = [];
+        const empresaRadarData = [];
+        const candidatoRadarData = [];
+        
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.category_scores %}
+            {% for cat, score in metricas.empathy_analysis.category_scores.items() %}
+                radarLabels.push('{{ cat.replace("_", " ").title() }}');
+                candidatoRadarData.push({{ score }});
+            {% endfor %}
+        {% endif %}
+        
+        // Calcular datos de la empresa usando las puntuaciones calculadas del análisis de empatía
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.category_scores %}
+            // Usar las mismas categorías que el candidato para consistencia
+            {% for cat in metricas.empathy_analysis.category_scores.keys() %}
+                // Para la empresa, usamos valores de referencia altos (85-95) como benchmark
+                {% if cat in ['nombres', 'documentacion', 'consistencia_estilo'] %}
+                    empresaRadarData.push(90); // Categorías críticas con estándar alto
+                {% elif cat in ['modularidad', 'seguridad', 'patrones'] %}
+                    empresaRadarData.push(88); // Categorías importantes
+                {% elif cat in ['complejidad', 'rendimiento'] %}
+                    empresaRadarData.push(85); // Categorías con buen estándar
+                {% elif cat in ['manejo_errores', 'pruebas', 'comentarios'] %}
+                    empresaRadarData.push(85); // Categorías estándar
+                {% else %}
+                    empresaRadarData.push(85); // Valor por defecto
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            // Si no hay datos, usar valores por defecto
+            radarLabels.forEach(() => empresaRadarData.push(85));
+        {% endif %}
+        
+        // Debug: verificar los datos
+        console.log('Radar Labels:', radarLabels);
+        console.log('Empresa Data:', empresaRadarData);
+        console.log('Candidato Data:', candidatoRadarData);
+        
+        new Chart(radarComparisonCtx, {
+            type: 'radar',
+            data: {
+                labels: radarLabels,
+                datasets: [{
+                    label: 'Empresa (Referencia)',
+                    data: empresaRadarData,
+                    backgroundColor: 'rgba(139, 157, 195, 0.2)',
+                    borderColor: 'rgba(139, 157, 195, 1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(139, 157, 195, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(139, 157, 195, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }, {
+                    label: 'Candidato',
+                    data: candidatoRadarData,
+                    backgroundColor: 'rgba(221, 160, 221, 0.2)',
+                    borderColor: 'rgba(221, 160, 221, 1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: 'rgba(221, 160, 221, 1)',
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: 'rgba(221, 160, 221, 1)',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20,
+                            callback: function(value) {
+                                return value + '%';
+                            },
+                            font: {
+                                size: 11
+                            }
+                        },
+                        pointLabels: {
+                            font: {
+                                size: 12,
+                                weight: 'bold'
+                            },
+                            padding: 15
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        angleLines: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.parsed.r.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Mapa de Calor - Análisis Completo
+        const heatmapCtx = document.getElementById('heatmapChart').getContext('2d');
+        const heatmapData = [];
+        const metrics = ['Nombres', 'Docs', 'Modular', 'Complex', 'Errores', 'Tests', 'Segur', 'Estilo', 'Patrones', 'Perf', 'Comments'];
+        const repos = ['Empresa', 'Candidato', 'Diferencia'];
+        
+        // Datos de empresa
+        const empresaMetrics = [
+            {% for cat in ['nombres', 'documentacion', 'modularidad', 'complejidad', 'manejo_errores', 'pruebas', 'seguridad', 'consistencia_estilo'] %}
+                {% if metricas.repos.empresa and metricas.repos.empresa[cat] %}
+                    {{ (metricas.repos.empresa[cat].values()|sum / metricas.repos.empresa[cat]|length * 100) if metricas.repos.empresa[cat]|length > 0 else 0 }},
+                {% else %}
+                    0,
+                {% endif %}
+            {% endfor %}
+            {% if metricas.repos.empresa and metricas.repos.empresa.patrones %}
+                {{ metricas.repos.empresa.patrones.pattern_score|default(0) }},
+            {% else %}
+                0,
+            {% endif %}
+            {% if metricas.repos.empresa and metricas.repos.empresa.rendimiento %}
+                {{ metricas.repos.empresa.rendimiento.performance_score|default(0) }},
+            {% else %}
+                0,
+            {% endif %}
+            {% if metricas.repos.empresa and metricas.repos.empresa.comentarios %}
+                {{ metricas.repos.empresa.comentarios.comment_metrics.comment_quality_score|default(0) }}
+            {% else %}
+                0
+            {% endif %}
+        ];
+        
+        // Datos de candidato
+        const candidatoMetrics = [
+            {% for cat in ['nombres', 'documentacion', 'modularidad', 'complejidad', 'manejo_errores', 'pruebas', 'seguridad', 'consistencia_estilo'] %}
+                {% if metricas.repos.candidato and metricas.repos.candidato[cat] %}
+                    {{ (metricas.repos.candidato[cat].values()|sum / metricas.repos.candidato[cat]|length * 100) if metricas.repos.candidato[cat]|length > 0 else 0 }},
+                {% else %}
+                    0,
+                {% endif %}
+            {% endfor %}
+            {% if metricas.repos.candidato and metricas.repos.candidato.patrones %}
+                {{ metricas.repos.candidato.patrones.pattern_score|default(0) }},
+            {% else %}
+                0,
+            {% endif %}
+            {% if metricas.repos.candidato and metricas.repos.candidato.rendimiento %}
+                {{ metricas.repos.candidato.rendimiento.performance_score|default(0) }},
+            {% else %}
+                0,
+            {% endif %}
+            {% if metricas.repos.candidato and metricas.repos.candidato.comentarios %}
+                {{ metricas.repos.candidato.comentarios.comment_metrics.comment_quality_score|default(0) }}
+            {% else %}
+                0
+            {% endif %}
+        ];
+        
+        // Calcular diferencias
+        const diferencias = empresaMetrics.map((val, idx) => Math.abs(val - candidatoMetrics[idx]));
+        
+        // Crear datos para el mapa de calor
+        empresaMetrics.forEach((val, idx) => {
+            heatmapData.push({x: metrics[idx], y: 'Empresa', v: val});
+        });
+        candidatoMetrics.forEach((val, idx) => {
+            heatmapData.push({x: metrics[idx], y: 'Candidato', v: val});
+        });
+        diferencias.forEach((val, idx) => {
+            heatmapData.push({x: metrics[idx], y: 'Diferencia', v: val});
+        });
+        
+        // Crear escala de colores personalizada con tonos pastel
+        const colorScale = (value) => {
+            if (value >= 80) return 'rgba(152, 216, 200, 0.9)';  // Verde menta
+            if (value >= 60) return 'rgba(180, 212, 230, 0.8)';  // Azul cielo
+            if (value >= 40) return 'rgba(246, 230, 180, 0.7)';  // Amarillo pastel
+            if (value >= 20) return 'rgba(247, 183, 163, 0.6)';  // Coral pastel
+            return 'rgba(221, 160, 221, 0.5)';  // Ciruela pastel
+        };
+        
+        new Chart(heatmapCtx, {
+            type: 'matrix',
+            data: {
+                datasets: [{
+                    label: 'Métricas',
+                    data: heatmapData,
+                    backgroundColor(context) {
+                        const value = context.dataset.data[context.dataIndex].v;
+                        return colorScale(value);
+                    },
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    width: ({chart}) => (chart.chartArea || {}).width / metrics.length - 1,
+                    height: ({chart}) => (chart.chartArea || {}).height / repos.length - 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        type: 'category',
+                        labels: metrics,
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45
+                        },
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        type: 'category',
+                        labels: repos,
+                        offset: true,
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title() {
+                                return '';
+                            },
+                            label(context) {
+                                const v = context.dataset.data[context.dataIndex];
+                                return v.y + ' - ' + v.x + ': ' + v.v.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráfico de Análisis Ponderado
+        const weightedCtx = document.getElementById('weightedChart').getContext('2d');
+        const weights = {
+            'Nombres': 0.15,
+            'Documentación': 0.15,
+            'Modularidad': 0.15,
+            'Complejidad': 0.15,
+            'Manejo Errores': 0.10,
+            'Pruebas': 0.10,
+            'Seguridad': 0.10,
+            'Estilo': 0.10
+        };
+        
+        const weightedScores = [];
+        const weightedLabels = [];
+        let totalWeighted = 0;
+        
+        {% if metricas.empathy_analysis and metricas.empathy_analysis.category_scores %}
+            {% for cat, score in metricas.empathy_analysis.category_scores.items() %}
+                {% set cat_name = cat.replace('_', ' ').title() %}
+                {% if cat_name in ['Nombres', 'Documentacion', 'Modularidad', 'Complejidad', 'Manejo Errores', 'Pruebas', 'Seguridad', 'Consistencia Estilo'] %}
+                    {% set display_name = cat_name.replace('Documentacion', 'Documentación').replace('Consistencia Estilo', 'Estilo') %}
+                    weightedLabels.push('{{ display_name }}');
+                    weightedScores.push({{ score }} * (weights['{{ display_name }}'] || 0.1));
+                    totalWeighted += {{ score }} * (weights['{{ display_name }}'] || 0.1);
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+        
+        new Chart(weightedCtx, {
+            type: 'polarArea',
+            data: {
+                labels: weightedLabels,
+                datasets: [{
+                    data: weightedScores,
+                    backgroundColor: [
+                        'rgba(255, 182, 193, 0.7)',   // Rosa claro
+                        'rgba(152, 216, 200, 0.7)',   // Verde menta
+                        'rgba(180, 212, 230, 0.7)',   // Azul cielo
+                        'rgba(221, 160, 221, 0.7)',   // Ciruela
+                        'rgba(246, 230, 180, 0.7)',   // Amarillo pastel
+                        'rgba(255, 218, 185, 0.7)',   // Melocotón
+                        'rgba(230, 230, 250, 0.7)',   // Lavanda
+                        'rgba(240, 230, 140, 0.7)'    // Caqui claro
+                    ],
+                    borderColor: '#ffffff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 15,
+                        ticks: {
+                            stepSize: 3,
+                            callback: function(value) {
+                                return value.toFixed(0);
+                            }
+                        },
+                        grid: {
+                            color: '#E6D6DE'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 10,
+                            font: {
+                                size: 10
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const weight = Object.values(weights)[context.dataIndex] || 0.1;
+                                const score = context.parsed / weight;
+                                return context.label + ': ' + score.toFixed(1) + '% (peso: ' + (weight * 100).toFixed(0) + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Gráficos de Patrones
+        {% if (metricas.repos.empresa and metricas.repos.empresa.patrones) or (metricas.repos.candidato and metricas.repos.candidato.patrones) %}
+        // Patrones de diseño
+        const patternsCtx = document.getElementById('patternsChart').getContext('2d');
+        const patternLabels = [];
+        const empresaPatterns = [];
+        const candidatoPatterns = [];
+        
+        const allPatterns = new Set();
+        {% if metricas.repos.empresa and metricas.repos.empresa.patrones and metricas.repos.empresa.patrones.design_patterns %}
+            {% for pattern in metricas.repos.empresa.patrones.design_patterns.keys() %}
+                allPatterns.add('{{ pattern }}');
+            {% endfor %}
+        {% endif %}
+        {% if metricas.repos.candidato and metricas.repos.candidato.patrones and metricas.repos.candidato.patrones.design_patterns %}
+            {% for pattern in metricas.repos.candidato.patrones.design_patterns.keys() %}
+                allPatterns.add('{{ pattern }}');
+            {% endfor %}
+        {% endif %}
+        
+        allPatterns.forEach(pattern => {
+            patternLabels.push(pattern);
+            {% if metricas.repos.empresa and metricas.repos.empresa.patrones and metricas.repos.empresa.patrones.design_patterns %}
+                empresaPatterns.push({{ metricas.repos.empresa.patrones.design_patterns|tojson }}.hasOwnProperty(pattern) ? 
+                    {{ metricas.repos.empresa.patrones.design_patterns|tojson }}[pattern].length : 0);
+            {% else %}
+                empresaPatterns.push(0);
+            {% endif %}
+            
+            {% if metricas.repos.candidato and metricas.repos.candidato.patrones and metricas.repos.candidato.patrones.design_patterns %}
+                candidatoPatterns.push({{ metricas.repos.candidato.patrones.design_patterns|tojson }}.hasOwnProperty(pattern) ? 
+                    {{ metricas.repos.candidato.patrones.design_patterns|tojson }}[pattern].length : 0);
+            {% else %}
+                candidatoPatterns.push(0);
+            {% endif %}
+        });
+        
+        new Chart(patternsCtx, {
+            type: 'bar',
+            data: {
+                labels: patternLabels,
+                datasets: [{
+                    label: 'Empresa',
+                    data: empresaPatterns,
+                    backgroundColor: 'rgba(139, 157, 195, 0.8)',
+                    borderColor: 'rgba(139, 157, 195, 1)',
+                    borderWidth: 1
+                }, {
+                    label: 'Candidato',
+                    data: candidatoPatterns,
+                    backgroundColor: 'rgba(153, 153, 153, 0.6)',
+                    borderColor: 'rgba(153, 153, 153, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Patrones de Diseño Detectados'
+                    },
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Anti-patrones
+        const antiPatternsCtx = document.getElementById('antiPatternsChart').getContext('2d');
+        const antiPatternData = [];
+        const antiPatternLabels = [];
+        
+        {% if metricas.repos.empresa and metricas.repos.empresa.patrones and metricas.repos.empresa.patrones.anti_patterns %}
+            {% for pattern, instances in metricas.repos.empresa.patrones.anti_patterns.items() %}
+                antiPatternLabels.push('Empresa: {{ pattern.replace("_", " ").title() }}');
+                antiPatternData.push({{ instances|length }});
+            {% endfor %}
+        {% endif %}
+        
+        {% if metricas.repos.candidato and metricas.repos.candidato.patrones and metricas.repos.candidato.patrones.anti_patterns %}
+            {% for pattern, instances in metricas.repos.candidato.patrones.anti_patterns.items() %}
+                antiPatternLabels.push('Candidato: {{ pattern.replace("_", " ").title() }}');
+                antiPatternData.push({{ instances|length }});
+            {% endfor %}
+        {% endif %}
+        
+        new Chart(antiPatternsCtx, {
+            type: 'bar',
+            data: {
+                labels: antiPatternLabels,
+                datasets: [{
+                    label: 'Cantidad de Anti-patrones',
+                    data: antiPatternData,
+                    backgroundColor: antiPatternLabels.map(label => 
+                        label.startsWith('Empresa') ? 'rgba(222, 53, 53, 0.6)' : 'rgba(255, 111, 111, 0.6)'
+                    ),
+                    borderColor: antiPatternLabels.map(label => 
+                        label.startsWith('Empresa') ? 'rgba(222, 53, 53, 1)' : 'rgba(255, 111, 111, 1)'
+                    ),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Anti-patrones Detectados (menor es mejor)'
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            autoSkip: false,
+                            maxRotation: 45,
+                            minRotation: 45
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    </script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Inicializar todos los tooltips después de que Bootstrap esté cargado
+        document.addEventListener('DOMContentLoaded', function() {
+            // Esperar un momento para asegurar que Bootstrap está completamente cargado
+            setTimeout(function() {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                });
+                console.log('Tooltips inicializados:', tooltipList.length);
+            }, 100);
+        });
+    </script>
+</body>
+</html>

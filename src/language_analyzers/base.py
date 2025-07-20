@@ -15,6 +15,13 @@ License: MIT
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any, Optional, Tuple
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from duplication_analyzer import DuplicationAnalyzer
+from dependency_analyzer import DependencyAnalyzer
+from pattern_analyzer import PatternAnalyzer
+from performance_analyzer import PerformanceAnalyzer
+from comment_analyzer import CommentAnalyzer
 
 
 class LanguageAnalyzer(ABC):
@@ -185,3 +192,68 @@ class LanguageAnalyzer(ABC):
             'metrics': self.metrics,
             'empathy_score': self.calculate_empathy_score()
         }
+    
+    def analyze_duplication(self, files_content: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Analiza duplicación de código en los archivos.
+        
+        Args:
+            files_content: Diccionario con el contenido de archivos.
+            
+        Returns:
+            Dict[str, Any]: Análisis de duplicación.
+        """
+        analyzer = DuplicationAnalyzer(min_block_size=5, ignore_whitespace=True)
+        return analyzer.analyze_repository_files(files_content)
+    
+    def analyze_dependencies(self, files_content: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Analiza las dependencias en los archivos.
+        
+        Args:
+            files_content: Diccionario con el contenido de archivos.
+            
+        Returns:
+            Dict[str, Any]: Análisis de dependencias.
+        """
+        analyzer = DependencyAnalyzer()
+        return analyzer.analyze_dependencies(files_content)
+    
+    def analyze_patterns(self, files_content: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Analiza patrones de diseño y anti-patrones.
+        
+        Args:
+            files_content: Diccionario con el contenido de archivos.
+            
+        Returns:
+            Dict[str, Any]: Análisis de patrones.
+        """
+        analyzer = PatternAnalyzer()
+        return analyzer.analyze_patterns(files_content)
+    
+    def analyze_performance(self, files_content: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Analiza métricas de rendimiento.
+        
+        Args:
+            files_content: Diccionario con el contenido de archivos.
+            
+        Returns:
+            Dict[str, Any]: Análisis de rendimiento.
+        """
+        analyzer = PerformanceAnalyzer()
+        return analyzer.analyze_performance(files_content)
+    
+    def analyze_comments(self, files_content: Dict[str, str]) -> Dict[str, Any]:
+        """
+        Analiza comentarios y TODOs.
+        
+        Args:
+            files_content: Diccionario con el contenido de archivos.
+            
+        Returns:
+            Dict[str, Any]: Análisis de comentarios.
+        """
+        analyzer = CommentAnalyzer()
+        return analyzer.analyze_comments(files_content)

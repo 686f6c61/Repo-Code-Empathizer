@@ -139,9 +139,13 @@ class ParallelAnalyzer:
         metrics = analyzer.analyze_files(files)
         summary = analyzer.get_summary()
         
+        # Analyze code duplication
+        duplication_analysis = analyzer.analyze_duplication(files)
+        
         return {
             'metrics': metrics,
             'summary': summary,
+            'duplication': duplication_analysis,
             'file_count': len(files)
         }
     
@@ -194,6 +198,10 @@ class ParallelAnalyzer:
                         if category not in merged['languages'][language]['metrics']:
                             merged['languages'][language]['metrics'][category] = {}
                         merged['languages'][language]['metrics'][category].update(values)
+                
+                # Merge duplication data
+                if 'duplication' in data:
+                    merged['languages'][language]['duplication'] = data['duplication']
                 
                 # Update file count
                 merged['languages'][language]['file_count'] += data.get('file_count', 0)

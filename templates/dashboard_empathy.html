@@ -359,6 +359,163 @@
             color: #666;
             font-size: 0.9em;
         }
+        
+        /* Duplication Styles */
+        .duplication-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .stat-value {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #333333;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            color: #666666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .duplication-details {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 3px solid #999999;
+        }
+        
+        .duplication-details p {
+            margin: 5px 0;
+            color: #555555;
+        }
+        
+        .duplication-files {
+            margin-top: 20px;
+        }
+        
+        .duplication-files ul {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        
+        .duplication-files li {
+            padding: 8px 15px;
+            background: #fafafa;
+            margin: 5px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #444444;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .duplication-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-style: italic;
+            color: #555555;
+        }
+        
+        /* Dependency Styles */
+        .dependency-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .dependency-warning {
+            background: #f5f5f5;
+            border-left: 4px solid #999999;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #333333;
+        }
+        
+        .dependency-details {
+            margin-top: 20px;
+        }
+        
+        .dependency-details h4 {
+            color: #444444;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .dependency-details ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .dependency-details li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dep-count {
+            color: #666666;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        
+        .external-deps {
+            margin-top: 20px;
+        }
+        
+        .external-deps h4 {
+            color: #444444;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .deps-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .dep-tag {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f0f0f0;
+            border: 1px solid #cccccc;
+            border-radius: 15px;
+            font-size: 0.85em;
+            color: #555555;
+            font-family: monospace;
+        }
+        
+        .dependency-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 8px;
+            color: #555555;
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
     </style>
 </head>
 <body>
@@ -465,6 +622,299 @@
             {% endif %}
         </div>
         {% endif %}
+        
+        <!-- Análisis de Duplicación de Código -->
+        <div class="grid">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.duplicacion %}
+            <div class="card">
+                <h2>
+                    {% if repo_tipo == 'empresa' %}
+                        <span class="empresa-badge">EMPRESA</span> Duplicación de Código
+                    {% else %}
+                        <span class="candidato-badge">CANDIDATO</span> Duplicación de Código
+                    {% endif %}
+                </h2>
+                
+                <div class="duplication-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ repo_data.duplicacion.porcentaje_global }}%</div>
+                        <div class="stat-label">Duplicación Global</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ repo_data.duplicacion.bloques_encontrados }}</div>
+                        <div class="stat-label">Bloques Duplicados</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ repo_data.duplicacion.lineas_duplicadas }}</div>
+                        <div class="stat-label">Líneas Duplicadas</div>
+                    </div>
+                </div>
+                
+                {% if repo_data.duplicacion.mayor_duplicacion and repo_data.duplicacion.mayor_duplicacion.archivo %}
+                <div class="duplication-details">
+                    <p><strong>Mayor duplicación:</strong></p>
+                    <p>{{ repo_data.duplicacion.mayor_duplicacion.archivo }} ({{ repo_data.duplicacion.mayor_duplicacion.porcentaje }}%)</p>
+                </div>
+                {% endif %}
+                
+                {% if repo_data.duplicacion.archivos_afectados %}
+                <div class="duplication-files">
+                    <p><strong>Archivos afectados:</strong></p>
+                    <ul>
+                    {% for archivo in repo_data.duplicacion.archivos_afectados[:5] %}
+                        <li>{{ archivo }}</li>
+                    {% endfor %}
+                    {% if repo_data.duplicacion.archivos_afectados|length > 5 %}
+                        <li>... y {{ repo_data.duplicacion.archivos_afectados|length - 5 }} más</li>
+                    {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="duplication-summary">
+                    <p>{{ repo_data.duplicacion.summary }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Análisis de Dependencias -->
+        <div class="grid">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.dependencias %}
+            <div class="card">
+                <h2>
+                    {% if repo_tipo == 'empresa' %}
+                        <span class="empresa-badge">EMPRESA</span> Análisis de Dependencias
+                    {% else %}
+                        <span class="candidato-badge">CANDIDATO</span> Análisis de Dependencias
+                    {% endif %}
+                </h2>
+                
+                <div class="dependency-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ repo_data.dependencias.total_dependencies }}</div>
+                        <div class="stat-label">Total Dependencias</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ repo_data.dependencias.external_dependencies }}</div>
+                        <div class="stat-label">Externas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ repo_data.dependencias.internal_dependencies }}</div>
+                        <div class="stat-label">Internas</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(repo_data.dependencias.coupling_score * 100) }}%</div>
+                        <div class="stat-label">Acoplamiento</div>
+                    </div>
+                </div>
+                
+                {% if repo_data.dependencias.circular_dependencies > 0 %}
+                <div class="dependency-warning">
+                    <strong>⚠️ Advertencia:</strong> Se detectaron {{ repo_data.dependencias.circular_dependencies }} dependencias circulares
+                </div>
+                {% endif %}
+                
+                {% if repo_data.dependencias.most_used_dependencies %}
+                <div class="dependency-details">
+                    <h4>Dependencias más utilizadas:</h4>
+                    <ul>
+                    {% for dep in repo_data.dependencias.most_used_dependencies[:5] %}
+                        <li>
+                            <strong>{{ dep.dependency }}</strong>
+                            <span class="dep-count">({{ dep.used_by_count }} archivos)</span>
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                {% if repo_data.dependencias.external_deps_list %}
+                <div class="external-deps">
+                    <h4>Principales dependencias externas:</h4>
+                    <div class="deps-grid">
+                        {% for dep in repo_data.dependencias.external_deps_list[:10] %}
+                        <span class="dep-tag">{{ dep }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="dependency-summary">
+                    <p>{{ repo_data.dependencias.summary }}</p>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Análisis de Patrones de Diseño -->
+        <div class="grid">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.patrones %}
+            <div class="card">
+                <h2>
+                    {% if repo_tipo == 'empresa' %}
+                        <span class="empresa-badge">EMPRESA</span> Patrones de Diseño
+                    {% else %}
+                        <span class="candidato-badge">CANDIDATO</span> Patrones de Diseño
+                    {% endif %}
+                </h2>
+                
+                {% if repo_data.patrones.pattern_score %}
+                <div class="stat-item" style="margin-bottom: 20px;">
+                    <div class="stat-value">{{ "%.1f"|format(repo_data.patrones.pattern_score) }}</div>
+                    <div class="stat-label">Score de Patrones</div>
+                </div>
+                {% endif %}
+                
+                {% if repo_data.patrones.design_patterns %}
+                <h4>Patrones de Diseño Detectados:</h4>
+                <div class="deps-grid">
+                    {% for pattern, locations in repo_data.patrones.design_patterns.items() %}
+                    <span class="dep-tag">{{ pattern.title() }} ({{ locations|length }})</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if repo_data.patrones.anti_patterns %}
+                <h4 style="margin-top: 20px;">Anti-patrones Detectados:</h4>
+                <div class="dependency-warning">
+                    {% for anti_pattern, instances in repo_data.patrones.anti_patterns.items() %}
+                    <p><strong>{{ anti_pattern.replace('_', ' ').title() }}:</strong> {{ instances|length }} instancias</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if repo_data.patrones.summary %}
+                <div class="dependency-summary">
+                    <p>{{ repo_data.patrones.summary }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Análisis de Rendimiento -->
+        <div class="grid">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.rendimiento %}
+            <div class="card">
+                <h2>
+                    {% if repo_tipo == 'empresa' %}
+                        <span class="empresa-badge">EMPRESA</span> Análisis de Rendimiento
+                    {% else %}
+                        <span class="candidato-badge">CANDIDATO</span> Análisis de Rendimiento
+                    {% endif %}
+                </h2>
+                
+                {% if repo_data.rendimiento.performance_score %}
+                <div class="stat-item" style="margin-bottom: 20px;">
+                    <div class="stat-value">{{ "%.1f"|format(repo_data.rendimiento.performance_score) }}</div>
+                    <div class="stat-label">Score de Rendimiento</div>
+                </div>
+                {% endif %}
+                
+                {% if repo_data.rendimiento.performance_issues %}
+                <h4>Problemas de Rendimiento:</h4>
+                {% for issue_type, issues in repo_data.rendimiento.performance_issues.items() %}
+                    {% if issues %}
+                    <div class="dependency-warning" style="margin: 10px 0;">
+                        <strong>{{ issue_type.replace('_', ' ').title() }}:</strong> {{ issues|length }} ocurrencias
+                        {% if issues[0].complexity %}
+                        <span style="color: #666; font-size: 0.9em;">({{ issues[0].complexity }})</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                {% endif %}
+                
+                {% if repo_data.rendimiento.hotspots %}
+                <h4 style="margin-top: 20px;">Archivos Críticos:</h4>
+                <ul style="list-style: none; padding: 0;">
+                    {% for hotspot in repo_data.rendimiento.hotspots[:3] %}
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e0e0e0;">
+                        <strong>{{ hotspot.file.split('/')[-1] }}</strong>: {{ hotspot.issues_count }} problemas
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                {% if repo_data.rendimiento.summary %}
+                <div class="dependency-summary">
+                    <p>{{ repo_data.rendimiento.summary }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Análisis de Comentarios y TODOs -->
+        <div class="grid">
+            {% for repo_tipo, repo_data in metricas.repos.items() %}
+            {% if repo_data and repo_data.comentarios %}
+            <div class="card">
+                <h2>
+                    {% if repo_tipo == 'empresa' %}
+                        <span class="empresa-badge">EMPRESA</span> Comentarios y Documentación
+                    {% else %}
+                        <span class="candidato-badge">CANDIDATO</span> Comentarios y Documentación
+                    {% endif %}
+                </h2>
+                
+                <div class="dependency-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(repo_data.comentarios.comment_metrics.comment_ratio) }}%</div>
+                        <div class="stat-label">Ratio Comentarios</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(repo_data.comentarios.comment_metrics.documentation_coverage) }}%</div>
+                        <div class="stat-label">Cobertura Docs</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">{{ "%.1f"|format(repo_data.comentarios.comment_score) }}</div>
+                        <div class="stat-label">Score Comentarios</div>
+                    </div>
+                </div>
+                
+                {% if repo_data.comentarios.markers %}
+                <h4 style="margin-top: 20px;">Marcadores Encontrados:</h4>
+                <div class="deps-grid">
+                    {% for marker_type, markers in repo_data.comentarios.markers.items() %}
+                        {% if markers %}
+                        <span class="dep-tag" style="background: #f0f0f0;">{{ marker_type.upper() }} ({{ markers|length }})</span>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if repo_data.comentarios.by_priority %}
+                <h4 style="margin-top: 20px;">Por Prioridad:</h4>
+                <ul style="list-style: none; padding: 0;">
+                    {% for priority, count in repo_data.comentarios.by_priority.items() %}
+                        {% if count > 0 %}
+                        <li style="padding: 5px 0;">
+                            <strong>{{ priority.title() }}:</strong> {{ count }} marcadores
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+                {% endif %}
+                
+                {% if repo_data.comentarios.summary %}
+                <div class="dependency-summary">
+                    <p>{{ repo_data.comentarios.summary }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
         
         <!-- Recomendaciones -->
         {% if metricas.empathy_analysis and metricas.empathy_analysis.recommendations %}

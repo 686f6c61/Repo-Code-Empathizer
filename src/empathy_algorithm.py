@@ -36,16 +36,30 @@ class EmpathyAlgorithm:
         Los pesos están optimizados para evaluar la compatibilidad entre
         estilos de código en un contexto empresarial.
         """
-        # Pesos base por categoría (suman 1.0)
+        # Pesos base por categoría - 11 categorías (suman 1.0)
         self.category_weights = {
-            'nombres': 0.15,
-            'documentacion': 0.15,
-            'modularidad': 0.15,
-            'complejidad': 0.15,
-            'manejo_errores': 0.10,
-            'pruebas': 0.10,
-            'seguridad': 0.10,
-            'consistencia_estilo': 0.10
+            # Categorías base (8) - 70% del peso total
+            'nombres': 0.12,
+            'documentacion': 0.12,
+            'modularidad': 0.10,
+            'complejidad': 0.10,
+            'manejo_errores': 0.08,
+            'pruebas': 0.08,
+            'seguridad': 0.06,
+            'consistencia_estilo': 0.04,
+            # Categorías avanzadas (3) - 30% del peso total
+            'patrones': 0.12,  # Patrones de diseño y anti-patrones
+            'rendimiento': 0.10,  # Análisis de performance
+            'comentarios': 0.08   # Calidad de comentarios y TODOs
+        }
+        
+        # Matriz de correlación entre categorías (para ajustes más complejos)
+        self.category_correlations = {
+            'documentacion': {'comentarios': 0.8, 'pruebas': 0.3},
+            'modularidad': {'patrones': 0.7, 'complejidad': -0.5},
+            'patrones': {'modularidad': 0.7, 'rendimiento': 0.4},
+            'seguridad': {'manejo_errores': 0.6, 'pruebas': 0.4},
+            'rendimiento': {'complejidad': -0.6, 'patrones': 0.4}
         }
         
         # Factores de importancia por lenguaje
@@ -105,7 +119,15 @@ class EmpathyAlgorithm:
         detailed_scores = {}
         
         for category in self.category_weights.keys():
-            if category in empresa_metrics and category in candidato_metrics:
+            if category in ['patrones', 'rendimiento', 'comentarios']:
+                # Categorías avanzadas con cálculo especial
+                score = self._calculate_advanced_category_score(
+                    empresa_metrics.get(category, {}),
+                    candidato_metrics.get(category, {}),
+                    category
+                )
+                category_scores[category] = score
+            elif category in empresa_metrics and category in candidato_metrics:
                 score, details = self._calculate_category_score(
                     empresa_metrics[category],
                     candidato_metrics[category],
@@ -114,15 +136,19 @@ class EmpathyAlgorithm:
                 category_scores[category] = score
                 detailed_scores[category] = details
         
-        # Calcular puntuación base
-        base_score = self._calculate_base_score(category_scores)
+        # Aplicar correlaciones entre categorías
+        correlated_scores = self._apply_category_correlations(category_scores)
         
-        # Aplicar factores de ajuste
-        adjusted_score = self._apply_adjustments(
+        # Calcular puntuación base con algoritmo complejo
+        base_score = self._calculate_complex_base_score(correlated_scores)
+        
+        # Aplicar factores de ajuste múltiples
+        adjusted_score = self._apply_multi_factor_adjustments(
             base_score,
             language_overlap,
             empresa_metrics,
-            candidato_metrics
+            candidato_metrics,
+            category_scores
         )
         
         # Generar análisis detallado
@@ -146,7 +172,13 @@ class EmpathyAlgorithm:
             'language_overlap': language_overlap,
             'detailed_analysis': detailed_analysis,
             'recommendations': recommendations,
-            'interpretation': self._interpret_score(adjusted_score)
+            'interpretation': self._interpret_score(adjusted_score),
+            'algorithm_version': '3.0',
+            'complexity_factors': {
+                'base_score': round(base_score, 2),
+                'correlation_adjustment': round(base_score - self._calculate_base_score(category_scores), 2),
+                'multi_factor_adjustment': round(adjusted_score - base_score, 2)
+            }
         }
     
     def _get_languages(self, metrics: Dict[str, Any]) -> List[str]:
@@ -298,8 +330,166 @@ class EmpathyAlgorithm:
             ratio = candidato / empresa
             return ratio * 0.8  # Máximo 80% si no alcanza
     
+    def _calculate_advanced_category_score(self, empresa_data: Dict[str, Any],
+                                         candidato_data: Dict[str, Any],
+                                         category: str) -> float:
+        """Calcula puntuación para categorías avanzadas"""
+        if category == 'patrones':
+            return self._calculate_pattern_score(empresa_data, candidato_data)
+        elif category == 'rendimiento':
+            return self._calculate_performance_score(empresa_data, candidato_data)
+        elif category == 'comentarios':
+            return self._calculate_comment_score(empresa_data, candidato_data)
+        return 0.0
+    
+    def _calculate_pattern_score(self, empresa_patterns: Dict, candidato_patterns: Dict) -> float:
+        """Calcula puntuación de patrones de diseño"""
+        if not empresa_patterns or not candidato_patterns:
+            return 50.0  # Puntuación neutral si no hay datos
+        
+        # Puntuación base del candidato
+        candidato_score = candidato_patterns.get('pattern_score', 0)
+        empresa_score = empresa_patterns.get('pattern_score', 0)
+        
+        # Comparar cantidad de patrones buenos vs anti-patrones
+        candidato_patterns_count = len(candidato_patterns.get('design_patterns', {}))
+        candidato_antipatterns_count = len(candidato_patterns.get('anti_patterns', {}))
+        
+        empresa_patterns_count = len(empresa_patterns.get('design_patterns', {}))
+        empresa_antipatterns_count = len(empresa_patterns.get('anti_patterns', {}))
+        
+        # Calcular ratio de calidad (patrones buenos vs malos)
+        candidato_ratio = candidato_patterns_count / (candidato_antipatterns_count + 1)
+        empresa_ratio = empresa_patterns_count / (empresa_antipatterns_count + 1)
+        
+        # Si el candidato tiene mejor ratio que la empresa, bonus
+        if candidato_ratio > empresa_ratio:
+            bonus = min(20, (candidato_ratio - empresa_ratio) * 10)
+            return min(100, candidato_score + bonus)
+        else:
+            # Penalización por peor ratio
+            penalty = min(30, (empresa_ratio - candidato_ratio) * 10)
+            return max(0, candidato_score - penalty)
+    
+    def _calculate_performance_score(self, empresa_perf: Dict, candidato_perf: Dict) -> float:
+        """Calcula puntuación de rendimiento"""
+        if not empresa_perf or not candidato_perf:
+            return 50.0
+        
+        candidato_score = candidato_perf.get('performance_score', 0)
+        empresa_score = empresa_perf.get('performance_score', 0)
+        
+        # Comparar cantidad de problemas de rendimiento
+        candidato_issues = sum(len(v) for v in candidato_perf.get('performance_issues', {}).values())
+        empresa_issues = sum(len(v) for v in empresa_perf.get('performance_issues', {}).values())
+        
+        # Menos problemas es mejor
+        if candidato_issues < empresa_issues:
+            bonus = min(15, (empresa_issues - candidato_issues) * 3)
+            return min(100, candidato_score + bonus)
+        else:
+            penalty = min(25, (candidato_issues - empresa_issues) * 3)
+            return max(0, candidato_score - penalty)
+    
+    def _calculate_comment_score(self, empresa_comments: Dict, candidato_comments: Dict) -> float:
+        """Calcula puntuación de comentarios"""
+        if not empresa_comments or not candidato_comments:
+            return 50.0
+        
+        # Obtener métricas de comentarios
+        candidato_metrics = candidato_comments.get('comment_metrics', {})
+        empresa_metrics = empresa_comments.get('comment_metrics', {})
+        
+        candidato_quality = candidato_metrics.get('comment_quality_score', 0)
+        empresa_quality = empresa_metrics.get('comment_quality_score', 0)
+        
+        # Comparar cantidad de TODOs/FIXMEs (menos es mejor)
+        candidato_todos = sum(len(v) for v in candidato_comments.get('markers', {}).values())
+        empresa_todos = sum(len(v) for v in empresa_comments.get('markers', {}).values())
+        
+        # Score base
+        score = candidato_quality
+        
+        # Ajustar por cantidad de TODOs
+        if candidato_todos < empresa_todos:
+            score += min(10, (empresa_todos - candidato_todos) * 2)
+        else:
+            score -= min(15, (candidato_todos - empresa_todos) * 2)
+        
+        return max(0, min(100, score))
+    
+    def _apply_category_correlations(self, category_scores: Dict[str, float]) -> Dict[str, float]:
+        """Aplica correlaciones entre categorías para un cálculo más complejo"""
+        adjusted_scores = category_scores.copy()
+        
+        for category, correlations in self.category_correlations.items():
+            if category in adjusted_scores:
+                for correlated_cat, correlation_factor in correlations.items():
+                    if correlated_cat in adjusted_scores:
+                        # Ajustar puntuación basada en correlación
+                        adjustment = (adjusted_scores[correlated_cat] - 50) * correlation_factor * 0.1
+                        adjusted_scores[category] = max(0, min(100, 
+                            adjusted_scores[category] + adjustment))
+        
+        return adjusted_scores
+    
+    def _calculate_complex_base_score(self, category_scores: Dict[str, float]) -> float:
+        """Calcula puntuación base con algoritmo complejo"""
+        if not category_scores:
+            return 0.0
+        
+        # Separar categorías por importancia
+        critical_categories = ['patrones', 'seguridad', 'pruebas']
+        important_categories = ['nombres', 'documentacion', 'modularidad', 'complejidad']
+        standard_categories = ['manejo_errores', 'rendimiento', 'comentarios', 'consistencia_estilo']
+        
+        # Calcular puntuaciones por grupo
+        critical_score = 0.0
+        critical_weight = 0.0
+        important_score = 0.0
+        important_weight = 0.0
+        standard_score = 0.0
+        standard_weight = 0.0
+        
+        for category, score in category_scores.items():
+            weight = self.category_weights.get(category, 0.05)
+            
+            if category in critical_categories:
+                critical_score += score * weight
+                critical_weight += weight
+            elif category in important_categories:
+                important_score += score * weight
+                important_weight += weight
+            else:
+                standard_score += score * weight
+                standard_weight += weight
+        
+        # Calcular puntuaciones por grupo
+        critical_avg = critical_score / critical_weight if critical_weight > 0 else 0
+        important_avg = important_score / important_weight if important_weight > 0 else 0
+        standard_avg = standard_score / standard_weight if standard_weight > 0 else 0
+        
+        # Aplicar fórmula compleja con ponderación no lineal
+        # Las categorías críticas tienen mayor impacto
+        base_score = (
+            critical_avg * 0.45 +  # 45% del peso para categorías críticas
+            important_avg * 0.35 + # 35% para importantes
+            standard_avg * 0.20    # 20% para estándar
+        )
+        
+        # Penalización por baja puntuación en categorías críticas
+        if critical_avg < 50:
+            penalty = (50 - critical_avg) * 0.3
+            base_score = max(0, base_score - penalty)
+        
+        # Bonus por excelencia general (todas las categorías > 70)
+        if all(score > 70 for score in category_scores.values()):
+            base_score = min(100, base_score + 5)
+        
+        return base_score
+    
     def _calculate_base_score(self, category_scores: Dict[str, float]) -> float:
-        """Calcula la puntuación base ponderada"""
+        """Calcula la puntuación base ponderada (versión simple para compatibilidad)"""
         total_score = 0.0
         total_weight = 0.0
         
@@ -313,45 +503,134 @@ class EmpathyAlgorithm:
         
         return total_score / total_weight
     
-    def _apply_adjustments(self, base_score: float, language_overlap: Dict[str, Any],
-                          empresa_metrics: Dict[str, Any], 
-                          candidato_metrics: Dict[str, Any]) -> float:
-        """Aplica ajustes a la puntuación base"""
+    def _apply_multi_factor_adjustments(self, base_score: float, language_overlap: Dict[str, Any],
+                                       empresa_metrics: Dict[str, Any], 
+                                       candidato_metrics: Dict[str, Any],
+                                       category_scores: Dict[str, float]) -> float:
+        """Aplica múltiples factores de ajuste con algoritmo complejo"""
         adjusted_score = base_score
         
-        # Ajuste por coincidencia de lenguajes
+        # Factor 1: Coincidencia de lenguajes (peso variable según contexto)
         language_factor = language_overlap['score'] / 100
-        if language_factor < 0.5:
-            # Penalización significativa si hay poca coincidencia de lenguajes
-            adjusted_score *= 0.7
-        else:
-            adjusted_score *= (0.9 + language_factor * 0.1)
+        language_weight = 0.15  # 15% del impacto total
         
-        # Ajuste por tamaño del proyecto
+        if language_factor < 0.3:
+            # Penalización severa por muy poca coincidencia
+            adjusted_score *= (0.5 + language_factor)
+        elif language_factor < 0.7:
+            # Penalización moderada
+            adjusted_score *= (0.8 + language_factor * 0.2)
+        else:
+            # Bonus por alta coincidencia
+            adjusted_score *= (0.95 + language_factor * 0.05)
+        
+        # Factor 2: Complejidad del match (tamaño y naturaleza del proyecto)
         empresa_files = empresa_metrics.get('metadata', {}).get('archivos_analizados', 0)
         candidato_files = candidato_metrics.get('metadata', {}).get('archivos_analizados', 0)
         
         if empresa_files > 0 and candidato_files > 0:
             size_ratio = min(candidato_files / empresa_files, empresa_files / candidato_files)
-            if size_ratio < 0.3:
-                # Proyectos muy diferentes en tamaño
-                adjusted_score *= 0.95
+            complexity_factor = self._calculate_complexity_factor(size_ratio, empresa_files, candidato_files)
+            adjusted_score *= complexity_factor
         
-        # Bonus por excelencia en áreas críticas
-        critical_categories = ['seguridad', 'pruebas', 'documentacion']
+        # Factor 3: Distribución de puntuaciones (consistencia)
+        scores_std = np.std(list(category_scores.values())) if category_scores else 0
+        consistency_bonus = 0
+        
+        if scores_std < 15:  # Muy consistente
+            consistency_bonus = 3
+        elif scores_std < 25:  # Moderadamente consistente
+            consistency_bonus = 1
+        else:  # Inconsistente
+            consistency_bonus = -2
+        
+        adjusted_score += consistency_bonus
+        
+        # Factor 4: Excelencia en categorías críticas con ponderación dinámica
+        critical_categories = {
+            'seguridad': 3.0,      # Mayor peso
+            'pruebas': 2.5,
+            'patrones': 2.5,
+            'documentacion': 2.0,
+            'rendimiento': 1.5
+        }
+        
         excellence_bonus = 0
+        deficiency_penalty = 0
         
-        for category in critical_categories:
-            if category in candidato_metrics:
-                candidato_avg = self._get_category_average(candidato_metrics[category])
-                empresa_avg = self._get_category_average(empresa_metrics.get(category, {}))
+        for category, weight in critical_categories.items():
+            if category in category_scores:
+                score = category_scores[category]
                 
-                if candidato_avg > empresa_avg * 1.2:  # 20% mejor
-                    excellence_bonus += 2
+                if score >= 85:  # Excelente
+                    excellence_bonus += weight * 1.5
+                elif score >= 70:  # Bueno
+                    excellence_bonus += weight * 0.5
+                elif score < 50:  # Deficiente
+                    deficiency_penalty += weight * 1.5
         
-        adjusted_score = min(100, adjusted_score + excellence_bonus)
+        # Factor 5: Análisis de patrones y anti-patrones
+        if 'patrones' in candidato_metrics:
+            pattern_data = candidato_metrics['patrones']
+            antipattern_count = sum(len(v) for v in pattern_data.get('anti_patterns', {}).values())
+            pattern_count = sum(len(v) for v in pattern_data.get('design_patterns', {}).values())
+            
+            if antipattern_count > 0:
+                # Penalización progresiva por anti-patrones
+                antipattern_penalty = min(15, antipattern_count * 2)
+                adjusted_score -= antipattern_penalty
+            
+            if pattern_count > 3:
+                # Bonus por uso de patrones de diseño
+                pattern_bonus = min(5, pattern_count * 0.5)
+                adjusted_score += pattern_bonus
         
-        return adjusted_score
+        # Factor 6: Balance entre todas las métricas
+        min_score = min(category_scores.values()) if category_scores else 0
+        max_score = max(category_scores.values()) if category_scores else 0
+        balance_factor = 1.0
+        
+        if max_score - min_score > 50:
+            # Gran disparidad entre categorías
+            balance_factor = 0.95
+        elif max_score - min_score < 20:
+            # Muy balanceado
+            balance_factor = 1.05
+        
+        adjusted_score *= balance_factor
+        
+        # Aplicar bonus y penalizaciones finales
+        adjusted_score = adjusted_score + excellence_bonus - deficiency_penalty
+        
+        # Asegurar que el score esté en el rango válido
+        return max(0, min(100, adjusted_score))
+    
+    def _calculate_complexity_factor(self, size_ratio: float, empresa_files: int, 
+                                   candidato_files: int) -> float:
+        """Calcula factor de complejidad basado en tamaño de proyectos"""
+        if size_ratio < 0.2:
+            # Proyectos muy diferentes en tamaño
+            return 0.85
+        elif size_ratio < 0.5:
+            # Diferencia moderada
+            return 0.92
+        elif size_ratio > 0.8:
+            # Tamaños similares
+            if empresa_files > 50 and candidato_files > 50:
+                # Ambos proyectos grandes
+                return 1.05
+            else:
+                return 1.02
+        return 1.0
+    
+    def _apply_adjustments(self, base_score: float, language_overlap: Dict[str, Any],
+                          empresa_metrics: Dict[str, Any], 
+                          candidato_metrics: Dict[str, Any]) -> float:
+        """Versión simplificada para compatibilidad"""
+        return self._apply_multi_factor_adjustments(
+            base_score, language_overlap, empresa_metrics, 
+            candidato_metrics, {}
+        )
     
     def _get_category_average(self, category_metrics: Dict[str, float]) -> float:
         """Calcula el promedio de una categoría"""
@@ -451,6 +730,27 @@ class EmpathyAlgorithm:
                         'Añada comentarios en lógica compleja',
                         'Use formato de documentación estándar del lenguaje']
             },
+            'modularidad': {
+                'title': 'Mejorar modularidad',
+                'description': 'Organice mejor el código en módulos y componentes',
+                'tips': ['Separe responsabilidades en diferentes módulos',
+                        'Evite archivos muy grandes',
+                        'Use principios SOLID']
+            },
+            'complejidad': {
+                'title': 'Reducir complejidad',
+                'description': 'Simplifique el código para mejorar mantenibilidad',
+                'tips': ['Divida funciones largas en más pequeñas',
+                        'Reduzca niveles de anidación',
+                        'Elimine código duplicado']
+            },
+            'manejo_errores': {
+                'title': 'Mejorar manejo de errores',
+                'description': 'Implemente mejor gestión de excepciones',
+                'tips': ['Use excepciones específicas',
+                        'Maneje todos los casos de error',
+                        'Registre errores apropiadamente']
+            },
             'pruebas': {
                 'title': 'Implementar más pruebas',
                 'description': 'Aumente la cobertura de pruebas unitarias',
@@ -464,6 +764,34 @@ class EmpathyAlgorithm:
                 'tips': ['Valide todas las entradas de usuario',
                         'Use consultas parametrizadas',
                         'Evite exponer información sensible']
+            },
+            'consistencia_estilo': {
+                'title': 'Mejorar consistencia de estilo',
+                'description': 'Mantenga un estilo de código uniforme',
+                'tips': ['Use un linter o formatter',
+                        'Siga la guía de estilo del lenguaje',
+                        'Sea consistente con indentación y espaciado']
+            },
+            'patrones': {
+                'title': 'Mejorar uso de patrones de diseño',
+                'description': 'Aplique patrones de diseño apropiados y evite anti-patrones',
+                'tips': ['Estudie los patrones usados en la empresa',
+                        'Elimine código god class y spaghetti',
+                        'Use patrones apropiados para cada problema']
+            },
+            'rendimiento': {
+                'title': 'Optimizar rendimiento',
+                'description': 'Mejore la eficiencia del código',
+                'tips': ['Evite loops anidados innecesarios',
+                        'Optimice consultas a base de datos',
+                        'Use estructuras de datos apropiadas']
+            },
+            'comentarios': {
+                'title': 'Mejorar calidad de comentarios',
+                'description': 'Escriba comentarios más útiles y mantenga ratio apropiado',
+                'tips': ['Explique el "por qué", no el "qué"',
+                        'Mantenga comentarios actualizados',
+                        'Resuelva TODOs y FIXMEs pendientes']
             }
         }
         

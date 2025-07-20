@@ -77,26 +77,115 @@ class GitHubRepo:
                 "tamano_kb": float(repo.size)
             }
             
+            # Límite de archivos para repositorios grandes
+            if repo.size > 100000:  # Más de 100MB
+                MAX_FILES_TO_ANALYZE = 20  # Límite muy bajo para repos muy grandes
+            elif repo.size > 50000:  # Más de 50MB
+                MAX_FILES_TO_ANALYZE = 40  # Límite bajo para repos grandes
+            elif repo.size > 10000:  # Más de 10MB
+                MAX_FILES_TO_ANALYZE = 80  # Límite medio
+            else:
+                MAX_FILES_TO_ANALYZE = 150  # Límite normal para repos pequeños
+            
+            # Advertencia para repositorios grandes
+            if repo.size > 50000:  # Más de 50MB
+                logger.warning(f"⚠️  Repositorio grande detectado ({repo.size/1024:.1f}MB). Limitando análisis a {MAX_FILES_TO_ANALYZE} archivos.")
+                print(f"\n⚠️  Repositorio grande detectado ({repo.size/1024:.1f}MB)")
+                print(f"   Analizando hasta {MAX_FILES_TO_ANALYZE} archivos para optimizar el tiempo de análisis...")
+                print(f"   Para un análisis completo, considere clonar el repositorio localmente.")
+            
             # Obtener archivos de código soportados
             archivos_codigo = {}
+            archivos_analizados = 0
             extensiones_soportadas = AnalyzerFactory.get_supported_extensions()
             
             try:
-                contents = repo.get_contents("")
-                while contents:
-                    file_content = contents.pop(0)
-                    if file_content.type == "dir":
-                        contents.extend(repo.get_contents(file_content.path))
-                    else:
-                        # Verificar si el archivo tiene una extensión soportada
+                # Para repos muy grandes, usar estrategia optimizada
+                if repo.size > 30000:  # Más de 30MB
+                    print(f"   🚀 Usando estrategia de análisis rápido...")
+                    contents = repo.get_contents("")
+                    
+                    # Primero analizar archivos en la raíz
+                    root_files = [f for f in contents if f.type == "file"]
+                    subdirs = [d for d in contents if d.type == "dir"][:5]  # Solo primeros 5 directorios
+                    
+                    # Procesar archivos de la raíz
+                    for file_content in root_files:
+                        if archivos_analizados >= MAX_FILES_TO_ANALYZE:
+                            break
                         for ext in extensiones_soportadas:
                             if file_content.path.endswith(ext):
                                 try:
-                                    contenido = repo.get_contents(file_content.path).decoded_content.decode('utf-8')
+                                    if file_content.size > 1024 * 1024:  # Saltar archivos > 1MB
+                                        break
+                                    contenido = file_content.decoded_content.decode('utf-8')
                                     archivos_codigo[file_content.path] = contenido
+                                    archivos_analizados += 1
+                                    if archivos_analizados % 10 == 0:
+                                        print(f"   📄 {archivos_analizados} archivos analizados...")
                                 except Exception as e:
                                     logger.warning(f"Error leyendo {file_content.path}: {str(e)}")
                                 break
+                    
+                    # Procesar solo algunos subdirectorios
+                    for subdir in subdirs:
+                        if archivos_analizados >= MAX_FILES_TO_ANALYZE:
+                            break
+                        try:
+                            subdir_contents = repo.get_contents(subdir.path)
+                            for file_content in subdir_contents[:20]:  # Max 20 archivos por subdirectorio
+                                if archivos_analizados >= MAX_FILES_TO_ANALYZE:
+                                    break
+                                if file_content.type == "file":
+                                    for ext in extensiones_soportadas:
+                                        if file_content.path.endswith(ext):
+                                            try:
+                                                if file_content.size > 1024 * 1024:
+                                                    break
+                                                contenido = file_content.decoded_content.decode('utf-8')
+                                                archivos_codigo[file_content.path] = contenido
+                                                archivos_analizados += 1
+                                                if archivos_analizados % 10 == 0:
+                                                    print(f"   📄 {archivos_analizados} archivos analizados...")
+                                            except Exception as e:
+                                                logger.warning(f"Error leyendo {file_content.path}: {str(e)}")
+                                            break
+                        except:
+                            continue
+                else:
+                    # Estrategia normal para repos pequeños
+                    contents = repo.get_contents("")
+                    while contents and archivos_analizados < MAX_FILES_TO_ANALYZE:
+                        file_content = contents.pop(0)
+                        if file_content.type == "dir":
+                            # Solo añadir directorios si no hemos alcanzado el límite
+                            if archivos_analizados < MAX_FILES_TO_ANALYZE:
+                                contents.extend(repo.get_contents(file_content.path))
+                        else:
+                            # Verificar si el archivo tiene una extensión soportada
+                            for ext in extensiones_soportadas:
+                                if file_content.path.endswith(ext):
+                                    try:
+                                        # Saltar archivos muy grandes (más de 1MB)
+                                        if file_content.size > 1024 * 1024:
+                                            logger.info(f"Saltando archivo grande: {file_content.path} ({file_content.size/1024:.1f}KB)")
+                                            break
+                                            
+                                        contenido = repo.get_contents(file_content.path).decoded_content.decode('utf-8')
+                                        archivos_codigo[file_content.path] = contenido
+                                        archivos_analizados += 1
+                                        
+                                        # Mostrar progreso cada 10 archivos para repos grandes
+                                        if archivos_analizados % 10 == 0:
+                                            print(f"   📄 {archivos_analizados} archivos analizados...")
+                                            
+                                        # Verificar límite
+                                        if archivos_analizados >= MAX_FILES_TO_ANALYZE:
+                                            logger.info(f"Límite de {MAX_FILES_TO_ANALYZE} archivos alcanzado")
+                                            break
+                                    except Exception as e:
+                                        logger.warning(f"Error leyendo {file_content.path}: {str(e)}")
+                                    break
             except Exception as e:
                 logger.error(f"Error obteniendo contenido del repo: {str(e)}")
 
@@ -138,8 +227,14 @@ class GitHubRepo:
                 }
             }
 
+            # Actualizar metadata con archivos analizados
+            metadata['archivos_analizados'] = archivos_analizados
+            if archivos_analizados >= MAX_FILES_TO_ANALYZE:
+                metadata['nota_limite'] = f"Análisis limitado a {MAX_FILES_TO_ANALYZE} archivos"
+            
             # Analizar archivos usando el factory multi-lenguaje
             if archivos_codigo:
+                print(f"\n📊 Procesando métricas de {archivos_analizados} archivos...")
                 analisis_multi = AnalyzerFactory.analyze_multi_language_project(archivos_codigo)
                 
                 # Extraer métricas del lenguaje principal o hacer promedio ponderado
@@ -157,6 +252,26 @@ class GitHubRepo:
                     metricas_totales['metadata']['lenguajes_analizados'] = analisis_multi['total_metrics'].get('languages_analyzed', [])
                     metricas_totales['metadata']['archivos_analizados'] = analisis_multi['total_metrics'].get('total_files', 0)
                     metricas_totales['metadata']['empathy_score_global'] = analisis_multi['total_metrics'].get('overall_empathy_score', 0)
+                
+                # Agregar métricas de duplicación del lenguaje principal
+                if analisis_multi['primary_language'] and 'duplication' in analisis_multi['languages'][analisis_multi['primary_language']]:
+                    metricas_totales['duplicacion'] = analisis_multi['languages'][analisis_multi['primary_language']]['duplication']
+                
+                # Agregar análisis de dependencias del lenguaje principal
+                if analisis_multi['primary_language'] and 'dependencies' in analisis_multi['languages'][analisis_multi['primary_language']]:
+                    metricas_totales['dependencias'] = analisis_multi['languages'][analisis_multi['primary_language']]['dependencies']
+                
+                # Agregar análisis de patrones del lenguaje principal
+                if analisis_multi['primary_language'] and 'patterns' in analisis_multi['languages'][analisis_multi['primary_language']]:
+                    metricas_totales['patrones'] = analisis_multi['languages'][analisis_multi['primary_language']]['patterns']
+                
+                # Agregar análisis de rendimiento del lenguaje principal
+                if analisis_multi['primary_language'] and 'performance' in analisis_multi['languages'][analisis_multi['primary_language']]:
+                    metricas_totales['rendimiento'] = analisis_multi['languages'][analisis_multi['primary_language']]['performance']
+                
+                # Agregar análisis de comentarios del lenguaje principal
+                if analisis_multi['primary_language'] and 'comments' in analisis_multi['languages'][analisis_multi['primary_language']]:
+                    metricas_totales['comentarios'] = analisis_multi['languages'][analisis_multi['primary_language']]['comments']
             else:
                 logger.warning("No se encontraron archivos de código soportados en el repositorio")
 
@@ -237,20 +352,40 @@ class GitHubRepo:
             contents = repo.get_contents("")
             code_files = {}
             
+            # Límite de archivos
+            MAX_FILES = 200
+            files_count = 0
+            
             # Si no se especifican extensiones, usar todas las soportadas
             if extensions is None:
                 extensions = AnalyzerFactory.get_supported_extensions()
 
-            while contents:
+            # Límite más bajo para repos grandes
+            if repo.size > 50000:
+                MAX_FILES = 50
+            elif repo.size > 10000:
+                MAX_FILES = 100
+            else:
+                MAX_FILES = 200
+                
+            while contents and files_count < MAX_FILES:
                 file_content = contents.pop(0)
                 if file_content.type == "dir":
-                    contents.extend(repo.get_contents(file_content.path))
+                    if files_count < MAX_FILES:
+                        contents.extend(repo.get_contents(file_content.path))
                 else:
                     # Verificar si el archivo tiene una extensión soportada
                     for ext in extensions:
                         if file_content.path.endswith(ext):
                             try:
+                                # Saltar archivos muy grandes
+                                if file_content.size > 1024 * 1024:  # 1MB
+                                    break
+                                    
                                 code_files[file_content.path] = file_content.decoded_content.decode('utf-8')
+                                files_count += 1
+                                if files_count >= MAX_FILES:
+                                    break
                             except Exception as e:
                                 logger.warning(f"Error decodificando {file_content.path}: {str(e)}")
                             break
